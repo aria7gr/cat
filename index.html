@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐈 CAT [view]</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈</text></svg>">
+<link id="google-font" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Share+Tech+Mono&family=BIZ+UDGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+
+/* ============================================================
+   CSS変数：テーマ定義
+   ============================================================ */
+
+/* アクセシブルテーマ（デフォルト） */
+:root, [data-theme="accessible"] {
+  --bg: #1a1a2e;
+  --surface: #242440;
+  --surface2: #2e2e50;
+  --border: #4a4a70;
+  --accent: #f0d060;
+  --accent2: #ffe080;
+  --text: #f0ece0;
+  --text-dim: #b0aec0;
+  --text-bright: #ffffff;
+  --green: #60e0a0;
+  --blue: #80c8ff;
+  --r1-color: #60d080;
+  --r2-color: #f0d060;
+  --r3-color: #ff9060;
+  --highlight: rgba(240,208,96,0.15);
+  --highlight-border: rgba(240,208,96,0.6);
+  --shadow: rgba(0,0,0,0.5);
+}
+
+/* ゲームテーマ */
+[data-theme="game"] {
+  --bg: #0a0e14;
+  --surface: #111820;
+  --surface2: #1a2330;
+  --border: #1e3048;
+  --accent: #c8a84b;
+  --accent2: #e8c96a;
+  --text: #d4c9b0;
+  --text-dim: #7a8a9a;
+  --text-bright: #f0e6cc;
+  --green: #4caf82;
+  --blue: #4a9ade;
+  --r1-color: #7abf7a;
+  --r2-color: #c8a84b;
+  --r3-color: #e08060;
+  --highlight: rgba(200,168,75,0.12);
+  --highlight-border: rgba(200,168,75,0.5);
+  --shadow: rgba(0,0,0,0.7);
+}
+
+/* ============================================================
+   フォント定義
+   ============================================================ */
+[data-font="noto"] { --font-main: 'Noto Sans JP', sans-serif; }
+[data-font="biz"]  { --font-main: 'BIZ UDGothic', sans-serif; }
+[data-font="zen"]  { --font-main: 'Zen Kaku Gothic New', sans-serif; }
+
+/* ============================================================
+   文字サイズ定義
+   ============================================================ */
+[data-size="s"] { --sz-base: 12px; --sz-sm: 10px; --sz-lg: 14px; --sz-xl: 20px; --sz-xxl: 28px; }
+[data-size="m"] { --sz-base: 15px; --sz-sm: 12px; --sz-lg: 17px; --sz-xl: 24px; --sz-xxl: 34px; }
+[data-size="l"] { --sz-base: 18px; --sz-sm: 15px; --sz-lg: 21px; --sz-xl: 28px; --sz-xxl: 40px; }
+
+/* ============================================================
+   リセット・ベース
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-main, 'Noto Sans JP', sans-serif);
+  font-size: var(--sz-base, 15px);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ============================================================
+   ヘッダー
+   ============================================================ */
+.header {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  backdrop-filter: blur(12px);
+  gap: 8px;
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+
+.header-title {
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.clock {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: var(--sz-xl);
+  color: var(--text-bright);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.clock-date {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* 現在に戻るボタン */
+.btn-now {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 5px;
+  padding: 6px 14px;
+  font-family: var(--font-main);
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.btn-now:hover { opacity: 0.85; }
+
+/* 設定ボタン */
+.btn-settings {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 12px;
+  font-family: var(--font-main);
+  font-size: var(--sz-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s;
+}
+.btn-settings:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   設定パネル
+   ============================================================ */
+.settings-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 300;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.settings-overlay.open { display: flex; }
+
+.settings-panel {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  width: 280px;
+  padding: 20px;
+  margin-top: 52px;
+  border-radius: 0 0 0 10px;
+  box-shadow: -4px 4px 20px var(--shadow);
+}
+
+.settings-title {
+  font-size: var(--sz-lg);
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-group { margin-bottom: 18px; }
+
+.settings-group-label {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.settings-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.opt-btn {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 14px;
+  font-family: var(--font-main);
+  font-size: var(--sz-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.opt-btn:hover { border-color: var(--accent); }
+.opt-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+.settings-close {
+  width: 100%;
+  margin-top: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px;
+  font-family: var(--font-main);
+  font-size: var(--sz-sm);
+  cursor: pointer;
+}
+.settings-close:hover { color: var(--text); border-color: var(--text-dim); }
+
+/* ============================================================
+   リワードバー
+   ============================================================ */
+.reward-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reward-bar-label {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  margin-right: 2px;
+}
+
+.reward-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: var(--sz-sm);
+}
+.reward-badge .r-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: var(--sz-base);
+  font-weight: bold;
+}
+.reward-badge.r1 { border-color: var(--r1-color); }
+.reward-badge.r1 .r-num { color: var(--r1-color); }
+.reward-badge.r2 { border-color: var(--r2-color); }
+.reward-badge.r2 .r-num { color: var(--r2-color); }
+.reward-badge.r3 { border-color: var(--r3-color); }
+.reward-badge.r3 .r-num { color: var(--r3-color); }
+
+.reward-bar-note {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   メインレイアウト
+   ============================================================ */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  height: calc(100vh - 90px);
+}
+
+/* ============================================================
+   左パネル：現在のCA詳細
+   ============================================================ */
+.current-panel {
+  padding: 20px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+
+.current-slot-label {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+.current-event-name {
+  font-size: var(--sz-xxl);
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.current-time-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.time-chip {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: var(--sz-base);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 10px;
+  color: var(--accent);
+}
+
+/* リワード必要ポイント */
+.reward-req {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.reward-req-item {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.reward-req-item.r1 { border-top: 3px solid var(--r1-color); }
+.reward-req-item.r2 { border-top: 3px solid var(--r2-color); }
+.reward-req-item.r3 { border-top: 3px solid var(--r3-color); }
+
+.reward-req-label {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.reward-req-pts {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: var(--sz-lg);
+  font-weight: bold;
+}
+.r1 .reward-req-pts { color: var(--r1-color); }
+.r2 .reward-req-pts { color: var(--r2-color); }
+.r3 .reward-req-pts { color: var(--r3-color); }
+
+/* ノート */
+.slot-note {
+  font-size: var(--sz-sm);
+  color: var(--blue);
+  background: rgba(128,200,255,0.08);
+  border: 1px solid rgba(128,200,255,0.25);
+  border-radius: 5px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+/* タスクリスト */
+.tasks-title {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 5px;
+  margin-bottom: 4px;
+  background: var(--surface);
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.task-item:hover { border-color: var(--border); }
+
+.task-name {
+  font-size: var(--sz-base);
+  color: var(--text);
+  flex: 1;
+  padding-right: 12px;
+  line-height: 1.4;
+}
+
+.task-pts {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: var(--sz-base);
+  color: var(--green);
+  white-space: nowrap;
+  font-weight: bold;
+}
+.task-pts.high { color: var(--accent2); }
+.task-pts.very-high { color: var(--r3-color); }
+
+.viewing-badge {
+  display: inline-block;
+  font-size: var(--sz-sm);
+  background: rgba(128,200,255,0.15);
+  border: 1px solid rgba(128,200,255,0.3);
+  color: var(--blue);
+  border-radius: 3px;
+  padding: 1px 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   右パネル：週間スケジュール
+   ============================================================ */
+.schedule-panel {
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+.schedule-header {
+  padding: 10px 14px;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 10;
+}
+
+.day-section { border-bottom: 1px solid var(--border); }
+
+.day-label {
+  padding: 7px 14px;
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 33px;
+  z-index: 9;
+}
+
+.slot-row {
+  display: flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(100,100,150,0.2);
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 10px;
+}
+.slot-row:hover { background: rgba(255,255,255,0.04); }
+.slot-row.active {
+  background: var(--highlight);
+  border-left: 3px solid var(--accent);
+  padding-left: 11px;
+}
+
+.slot-times {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  min-width: 68px;
+  line-height: 1.7;
+}
+.slot-row.active .slot-times { color: var(--accent); }
+
+.slot-event {
+  font-size: var(--sz-base);
+  color: var(--text);
+  flex: 1;
+}
+.slot-row.active .slot-event { color: var(--text-bright); font-weight: 700; }
+
+.slot-r3 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   スクロールバー
+   ============================================================ */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+</style>
+</head>
+<body data-theme="accessible" data-size="m" data-font="noto">
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-title">🐈 Colony Action Tool [view]</div>
+    <button class="btn-now" onclick="goToNow()">▶ 現在に戻る</button>
+  </div>
+  <div class="header-right">
+    <div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="clock-date" id="clock-date">---</div>
+    </div>
+    <button class="btn-settings" onclick="toggleSettings()">⚙ 設定</button>
+  </div>
+</div>
+
+<!-- 設定パネル -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettingsOnOverlay(event)">
+  <div class="settings-panel">
+    <div class="settings-title">⚙ 表示設定</div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">テーマ</div>
+      <div class="settings-options">
+        <button class="opt-btn" data-setting="theme" data-value="accessible" onclick="applySetting('theme','accessible',this)">👁 見やすい</button>
+        <button class="opt-btn" data-setting="theme" data-value="game" onclick="applySetting('theme','game',this)">🎨 ゲーム風</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">文字サイズ</div>
+      <div class="settings-options">
+        <button class="opt-btn" data-setting="size" data-value="s" onclick="applySetting('size','s',this)">小</button>
+        <button class="opt-btn" data-setting="size" data-value="m" onclick="applySetting('size','m',this)">中</button>
+        <button class="opt-btn" data-setting="size" data-value="l" onclick="applySetting('size','l',this)">大</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-label">フォント</div>
+      <div class="settings-options">
+        <button class="opt-btn" data-setting="font" data-value="noto" onclick="applySetting('font','noto',this)" style="font-family:'Noto Sans JP'">Noto</button>
+        <button class="opt-btn" data-setting="font" data-value="biz" onclick="applySetting('font','biz',this)" style="font-family:'BIZ UDGothic'">BIZ UD</button>
+        <button class="opt-btn" data-setting="font" data-value="zen" onclick="applySetting('font','zen',this)" style="font-family:'Zen Kaku Gothic New'">ZEN</button>
+      </div>
+    </div>
+
+    <button class="settings-close" onclick="toggleSettings()">閉じる</button>
+  </div>
+</div>
+
+<!-- リワードバー -->
+<div class="reward-bar">
+  <span class="reward-bar-label">女王Lv25 リワード閾値</span>
+  <div class="reward-badge r1"><span>リワード1</span><span class="r-num" id="rb1">-</span></div>
+  <div class="reward-badge r2"><span>リワード2</span><span class="r-num" id="rb2">-</span></div>
+  <div class="reward-badge r3"><span>リワード3</span><span class="r-num" id="rb3">-</span></div>
+  <span class="reward-bar-note" id="reward-bar-note"></span>
+</div>
+
+<!-- メイン -->
+<div class="main">
+  <div class="current-panel" id="current-panel">
+    <div style="color:var(--text-dim);padding:20px;">読み込み中...</div>
+  </div>
+  <div class="schedule-panel" id="schedule-panel"></div>
+</div>
+
+<script>
+// ============================================================
+// データベース読み込み（GitHub Pages運用時は外部JSONを参照）
+// ============================================================
+const DB_URL = 'ca_database.json';
+let DB = null;
+
+async function loadDB() {
+  try {
+    const res = await fetch(DB_URL);
+    DB = await res.json();
+  } catch(e) {
+    // フォールバック：インライン最小データ（読み込み失敗時）
+    console.error('DB読み込み失敗:', e);
+    document.getElementById('current-panel').innerHTML =
+      '<div style="color:var(--r3-color);padding:20px;">⚠ ca_database.json の読み込みに失敗しました。<br>同じフォルダに ca_database.json があるか確認してください。</div>';
+    return false;
+  }
+  return true;
+}
+
+// ============================================================
+// 設定管理
+// ============================================================
+const SETTINGS_KEY = 'ca_tool_settings';
+const DEFAULTS = { theme: 'accessible', size: 'm', font: 'noto' };
+
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem(SETTINGS_KEY);
+    return saved ? { ...DEFAULTS, ...JSON.parse(saved) } : { ...DEFAULTS };
+  } catch(e) { return { ...DEFAULTS }; }
+}
+
+function saveSettings(settings) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {}
+}
+
+function applySettingsToDOM(settings) {
+  document.body.dataset.theme = settings.theme;
+  document.body.dataset.size  = settings.size;
+  document.body.dataset.font  = settings.font;
+}
+
+function applySetting(key, value, btn) {
+  const settings = loadSettings();
+  settings[key] = value;
+  saveSettings(settings);
+  applySettingsToDOM(settings);
+  // ボタンのアクティブ状態更新
+  document.querySelectorAll(`.opt-btn[data-setting="${key}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.value === value);
+  });
+}
+
+function syncSettingButtons(settings) {
+  ['theme','size','font'].forEach(key => {
+    document.querySelectorAll(`.opt-btn[data-setting="${key}"]`).forEach(b => {
+      b.classList.toggle('active', b.dataset.value === settings[key]);
+    });
+  });
+}
+
+function toggleSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  overlay.classList.toggle('open');
+}
+
+function closeSettingsOnOverlay(e) {
+  if (e.target === document.getElementById('settings-overlay')) toggleSettings();
+}
+
+// ============================================================
+// ユーティリティ
+// ============================================================
+const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+function fmtPts(n) {
+  if (n >= 1000000) {
+    const v = n / 1000000;
+    return (Number.isInteger(v) ? v : v.toFixed(2).replace(/\.?0+$/,'')) + 'M';
+  }
+  if (n >= 1000) {
+    const v = n / 1000;
+    return (Number.isInteger(v) ? v : v.toFixed(1).replace(/\.?0+$/,'')) + 'K';
+  }
+  return n.toString();
+}
+
+function getJST() {
+  return new Date(new Date().toLocaleString('en-US', {timeZone: 'Asia/Tokyo'}));
+}
+
+function getCurrentSlot() {
+  const jst = getJST();
+  const dayKey = DAY_KEYS[jst.getDay()];
+  const h = jst.getHours();
+  const slots = DB.schedule[dayKey].slots;
+  for (let i = 0; i < slots.length; i++) {
+    for (const t of slots[i].times) {
+      if (parseInt(t) === h) return { dayKey, slotIdx: i };
+    }
+  }
+  return { dayKey, slotIdx: 0 };
+}
+
+// ============================================================
+// 表示状態
+// ============================================================
+let viewingDay = null;
+let viewingSlot = null;
+
+function goToNow() {
+  const cur = getCurrentSlot();
+  renderCurrent(cur.dayKey, cur.slotIdx);
+  // スケジュールの現在スロットへスクロール
+  setTimeout(() => {
+    const el = document.querySelector('.slot-row.active');
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 50);
+}
+
+// ============================================================
+// 左パネル描画
+// ============================================================
+function renderCurrent(dayKey, slotIdx) {
+  viewingDay = dayKey;
+  viewingSlot = slotIdx;
+
+  const slot = DB.schedule[dayKey].slots[slotIdx];
+  const rtype = DB.reward_thresholds.types[slot.reward_type];
+  const cur = getCurrentSlot();
+  const isNow = (cur.dayKey === dayKey && cur.slotIdx === slotIdx);
+
+  // リワードバー更新
+  document.getElementById('rb1').textContent = fmtPts(rtype.reward1);
+  document.getElementById('rb2').textContent = fmtPts(rtype.reward2);
+  document.getElementById('rb3').textContent = fmtPts(slot.reward3_points);
+  document.getElementById('reward-bar-note').textContent = '（' + rtype.label + '）';
+
+  const viewingBadge = isNow ? '' : '<span class="viewing-badge">参照中</span>';
+  const noteHtml = slot.note
+    ? `<div class="slot-note">ℹ ${slot.note}</div>` : '';
+
+  let tasksHtml = '';
+  slot.tasks.forEach(t => {
+    let cls = '';
+    if (t.points >= 1000000) cls = 'very-high';
+    else if (t.points >= 10000) cls = 'high';
+    tasksHtml += `<div class="task-item">
+      <span class="task-name">${t.label}</span>
+      <span class="task-pts ${cls}">+${fmtPts(t.points)}</span>
+    </div>`;
+  });
+
+  document.getElementById('current-panel').innerHTML = `
+    <div class="current-slot-label">${DB.schedule[dayKey].label} / スロット${slotIdx+1}${viewingBadge}</div>
+    <div class="current-event-name">${slot.event}</div>
+    <div class="current-time-row">
+      ${slot.times.map(t => `<span class="time-chip">${t}</span>`).join('')}
+    </div>
+    <div class="reward-req">
+      <div class="reward-req-item r1">
+        <div class="reward-req-label">リワード 1</div>
+        <div class="reward-req-pts">${fmtPts(rtype.reward1)}</div>
+      </div>
+      <div class="reward-req-item r2">
+        <div class="reward-req-label">リワード 2</div>
+        <div class="reward-req-pts">${fmtPts(rtype.reward2)}</div>
+      </div>
+      <div class="reward-req-item r3">
+        <div class="reward-req-label">リワード 3</div>
+        <div class="reward-req-pts">${fmtPts(slot.reward3_points)}</div>
+      </div>
+    </div>
+    ${noteHtml}
+    <div class="tasks-title">タスク一覧（${slot.tasks.length}件）</div>
+    ${tasksHtml}
+  `;
+
+  // スケジュールのアクティブ状態更新
+  document.querySelectorAll('.slot-row').forEach(el => {
+    el.classList.toggle('active',
+      el.dataset.day === dayKey && parseInt(el.dataset.slot) === slotIdx);
+  });
+}
+
+// ============================================================
+// 右パネル描画
+// ============================================================
+function renderSchedule() {
+  const panel = document.getElementById('schedule-panel');
+  const cur = getCurrentSlot();
+  let html = '<div class="schedule-header">週間スケジュール（タップで詳細表示）</div>';
+
+  for (const dayKey of DAY_KEYS) {
+    const day = DB.schedule[dayKey];
+    html += `<div class="day-section"><div class="day-label">${day.label} 🐈</div>`;
+    day.slots.forEach((slot, i) => {
+      const isActive = cur.dayKey === dayKey && cur.slotIdx === i;
+      html += `<div class="slot-row ${isActive?'active':''}" data-day="${dayKey}" data-slot="${i}"
+        onclick="renderCurrent('${dayKey}',${i})">
+        <div class="slot-times">${slot.times.join('<br>')}</div>
+        <div class="slot-event">${slot.event}</div>
+        <div class="slot-r3">${fmtPts(slot.reward3_points)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  panel.innerHTML = html;
+}
+
+// ============================================================
+// 時計
+// ============================================================
+let lastSlotKey = '';
+
+function updateClock() {
+  const jst = getJST();
+  const h = String(jst.getHours()).padStart(2,'0');
+  const m = String(jst.getMinutes()).padStart(2,'0');
+  const s = String(jst.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('clock-date').textContent =
+    `${jst.getFullYear()}/${jst.getMonth()+1}/${jst.getDate()}（${days[jst.getDay()]}）JST`;
+
+  // スロット切り替わり検出（毎時5分）
+  const cur = getCurrentSlot();
+  const slotKey = `${cur.dayKey}-${cur.slotIdx}`;
+  if (slotKey !== lastSlotKey) {
+    lastSlotKey = slotKey;
+    renderSchedule();
+    // 現在スロットを表示中だった場合のみ自動更新
+    if (viewingDay === null || (viewingDay === cur.dayKey && viewingSlot === cur.slotIdx)) {
+      renderCurrent(cur.dayKey, cur.slotIdx);
+      setTimeout(() => {
+        const el = document.querySelector('.slot-row.active');
+        if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 100);
+    }
+  }
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+async function init() {
+  // 設定の適用
+  const settings = loadSettings();
+  applySettingsToDOM(settings);
+  syncSettingButtons(settings);
+
+  // DB読み込み
+  const ok = await loadDB();
+  if (!ok) return;
+
+  // 描画
+  renderSchedule();
+  const cur = getCurrentSlot();
+  lastSlotKey = `${cur.dayKey}-${cur.slotIdx}`;
+  renderCurrent(cur.dayKey, cur.slotIdx);
+
+  // 現在スロットへスクロール
+  setTimeout(() => {
+    const el = document.querySelector('.slot-row.active');
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 300);
+
+  // 時計開始
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+init();
+</script>
+</body>
+</html>

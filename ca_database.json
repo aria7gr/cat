@@ -1,0 +1,1112 @@
+{
+  "meta": {
+    "game": "ザ・アンツ：地下王国",
+    "queen_level": 25,
+    "timezone": "JST",
+    "note": "コロニー行動(CA)専用データベース。SVS要素は含まない。",
+    "sources": [
+      "https://the-ants-underground-kingdom.fandom.com/wiki/Colony_Action",
+      "https://lilygamelife.com/the-ants-event-calendar/",
+      "https://manimany.net/157"
+    ]
+  },
+  "reward_thresholds": {
+    "note": "女王Lv25のリワード必要ポイント。時間帯によって異なる。",
+    "types": {
+      "standard": {
+        "label": "通常",
+        "reward1": 100000,
+        "reward2": 800000,
+        "reward3": 5200000
+      },
+      "building_speed": {
+        "label": "建設加速あり（高難度）",
+        "reward1": 200000,
+        "reward2": 1200000,
+        "reward3": 16300000
+      },
+      "evolution_speed": {
+        "label": "進化加速あり（高難度）",
+        "reward1": 100000,
+        "reward2": 1100000,
+        "reward3": 15300000
+      },
+      "special_ant": {
+        "label": "特化アリ",
+        "reward1": 80000,
+        "reward2": 480000,
+        "reward3": 4000000
+      },
+      "low": {
+        "label": "低難度",
+        "reward1": 50000,
+        "reward2": 400000,
+        "reward3": 4240000
+      }
+    }
+  },
+  "schedule": {
+    "monday": {
+      "label": "月曜日",
+      "slots": [
+        {
+          "times": ["9:00", "17:00", "1:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 }
+          ]
+        },
+        {
+          "times": ["10:00", "18:00", "2:00"],
+          "event": "コロニー進化",
+          "reward_type": "evolution_speed",
+          "reward3_points": 15300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 800 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ特級菌糸を消耗", "points": 10000 },
+            { "label": "一つ菌糸を消耗", "points": 2000 },
+            { "label": "一つ真菌培養素Ⅳを消耗", "points": 10000 },
+            { "label": "一つ真菌培養素Ⅲを消耗", "points": 4000 },
+            { "label": "一つ真菌培養素Ⅱを消耗", "points": 1000 },
+            { "label": "一つ真菌培養素Ⅰを消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["11:00", "19:00", "3:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 }
+          ]
+        },
+        {
+          "times": ["12:00", "20:00", "4:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ特級菌糸を消耗", "points": 10000 },
+            { "label": "一つ菌糸を消耗", "points": 2000 },
+            { "label": "一つ真菌培養素Ⅳを消耗", "points": 10000 },
+            { "label": "一つ真菌培養素Ⅲを消耗", "points": 4000 },
+            { "label": "一つ真菌培養素Ⅱを消耗", "points": 1000 },
+            { "label": "一つ真菌培養素Ⅰを消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["13:00", "21:00", "5:00"],
+          "event": "蟻塚建設",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "進化戦闘力+1", "points": 400 }
+          ]
+        },
+        {
+          "times": ["14:00", "22:00", "6:00"],
+          "event": "蟻塚建設",
+          "reward_type": "building_speed",
+          "reward3_points": 16300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 900 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ特級菌糸を消耗", "points": 10000 },
+            { "label": "一つ菌糸を消耗", "points": 2000 },
+            { "label": "一つ真菌培養素Ⅳを消耗", "points": 10000 },
+            { "label": "一つ真菌培養素Ⅲを消耗", "points": 4000 },
+            { "label": "一つ真菌培養素Ⅱを消耗", "points": 1000 },
+            { "label": "一つ真菌培養素Ⅰを消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["15:00", "23:00", "7:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 }
+          ]
+        },
+        {
+          "times": ["16:00", "0:00", "8:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ特級菌糸を消耗", "points": 10000 },
+            { "label": "一つ菌糸を消耗", "points": 2000 },
+            { "label": "一つ真菌培養素Ⅳを消耗", "points": 10000 },
+            { "label": "一つ真菌培養素Ⅲを消耗", "points": 4000 },
+            { "label": "一つ真菌培養素Ⅱを消耗", "points": 1000 },
+            { "label": "一つ真菌培養素Ⅰを消耗", "points": 200 }
+          ]
+        }
+      ]
+    },
+    "tuesday": {
+      "label": "火曜日",
+      "slots": [
+        {
+          "times": ["9:00", "17:00", "1:00"],
+          "event": "蟻塚建設",
+          "reward_type": "building_speed",
+          "reward3_points": 16300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 900 }
+          ]
+        },
+        {
+          "times": ["10:00", "18:00", "2:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ7星細胞を獲得", "points": 10000000 },
+            { "label": "一つ6星細胞を獲得", "points": 5000000 },
+            { "label": "一つ5星細胞を獲得", "points": 2400000 },
+            { "label": "一つ4星細胞を獲得", "points": 600000 },
+            { "label": "一つ3星細胞を獲得", "points": 100000 },
+            { "label": "一つ2星細胞を獲得", "points": 10000 },
+            { "label": "一つ7星細胞を消耗", "points": 7000000 },
+            { "label": "一つ6星細胞を消耗", "points": 3500000 },
+            { "label": "一つ5星細胞を消耗", "points": 1600000 },
+            { "label": "一つ4星細胞を消耗", "points": 400000 },
+            { "label": "一つ3星細胞を消耗", "points": 60000 },
+            { "label": "一つ2星細胞を消耗", "points": 6000 },
+            { "label": "一つⅣ細胞液を消耗", "points": 10000 },
+            { "label": "一つⅢ細胞液を消耗", "points": 4000 },
+            { "label": "一つⅡ細胞液を消耗", "points": 1000 },
+            { "label": "一つⅠ細胞液を消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["11:00", "19:00", "3:00"],
+          "event": "兵隊アリを孵化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["12:00", "20:00", "4:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ7星細胞を獲得", "points": 10000000 },
+            { "label": "一つ6星細胞を獲得", "points": 5000000 },
+            { "label": "一つ5星細胞を獲得", "points": 2400000 },
+            { "label": "一つ4星細胞を獲得", "points": 600000 },
+            { "label": "一つ3星細胞を獲得", "points": 100000 },
+            { "label": "一つ2星細胞を獲得", "points": 10000 },
+            { "label": "一つ7星細胞を消耗", "points": 7000000 },
+            { "label": "一つ6星細胞を消耗", "points": 3500000 },
+            { "label": "一つ5星細胞を消耗", "points": 1600000 },
+            { "label": "一つ4星細胞を消耗", "points": 400000 },
+            { "label": "一つ3星細胞を消耗", "points": 60000 },
+            { "label": "一つ2星細胞を消耗", "points": 6000 },
+            { "label": "一つⅣ細胞液を消耗", "points": 10000 },
+            { "label": "一つⅢ細胞液を消耗", "points": 4000 },
+            { "label": "一つⅡ細胞液を消耗", "points": 1000 },
+            { "label": "一つⅠ細胞液を消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["13:00", "21:00", "5:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["14:00", "22:00", "6:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ7星細胞を獲得", "points": 10000000 },
+            { "label": "一つ6星細胞を獲得", "points": 5000000 },
+            { "label": "一つ5星細胞を獲得", "points": 2400000 },
+            { "label": "一つ4星細胞を獲得", "points": 600000 },
+            { "label": "一つ3星細胞を獲得", "points": 100000 },
+            { "label": "一つ2星細胞を獲得", "points": 10000 },
+            { "label": "一つ7星細胞を消耗", "points": 7000000 },
+            { "label": "一つ6星細胞を消耗", "points": 3500000 },
+            { "label": "一つ5星細胞を消耗", "points": 1600000 },
+            { "label": "一つ4星細胞を消耗", "points": 400000 },
+            { "label": "一つ3星細胞を消耗", "points": 60000 },
+            { "label": "一つ2星細胞を消耗", "points": 6000 },
+            { "label": "一つⅣ細胞液を消耗", "points": 10000 },
+            { "label": "一つⅢ細胞液を消耗", "points": 4000 },
+            { "label": "一つⅡ細胞液を消耗", "points": 1000 },
+            { "label": "一つⅠ細胞液を消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["15:00", "23:00", "7:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 }
+          ]
+        },
+        {
+          "times": ["16:00", "0:00", "8:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ7星細胞を獲得", "points": 10000000 },
+            { "label": "一つ6星細胞を獲得", "points": 5000000 },
+            { "label": "一つ5星細胞を獲得", "points": 2400000 },
+            { "label": "一つ4星細胞を獲得", "points": 600000 },
+            { "label": "一つ3星細胞を獲得", "points": 100000 },
+            { "label": "一つ2星細胞を獲得", "points": 10000 },
+            { "label": "一つ7星細胞を消耗", "points": 7000000 },
+            { "label": "一つ6星細胞を消耗", "points": 3500000 },
+            { "label": "一つ5星細胞を消耗", "points": 1600000 },
+            { "label": "一つ4星細胞を消耗", "points": 400000 },
+            { "label": "一つ3星細胞を消耗", "points": 60000 },
+            { "label": "一つ2星細胞を消耗", "points": 6000 },
+            { "label": "一つⅣ細胞液を消耗", "points": 10000 },
+            { "label": "一つⅢ細胞液を消耗", "points": 4000 },
+            { "label": "一つⅡ細胞液を消耗", "points": 1000 },
+            { "label": "一つⅠ細胞液を消耗", "points": 200 }
+          ]
+        }
+      ]
+    },
+    "wednesday": {
+      "label": "水曜日",
+      "slots": [
+        {
+          "times": ["9:00", "17:00", "1:00"],
+          "event": "蟻塚建設",
+          "reward_type": "building_speed",
+          "reward3_points": 16300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 900 }
+          ]
+        },
+        {
+          "times": ["10:00", "18:00", "2:00"],
+          "event": "コロニー進化",
+          "reward_type": "evolution_speed",
+          "reward3_points": 15300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 800 },
+            { "label": "生物残骸を１個消費する", "points": 700 }
+          ]
+        },
+        {
+          "times": ["11:00", "19:00", "3:00"],
+          "event": "兵隊アリを孵化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["12:00", "20:00", "4:00"],
+          "event": "蟻塚建設",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "生物残骸を１個消費する", "points": 700 }
+          ]
+        },
+        {
+          "times": ["13:00", "21:00", "5:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 }
+          ]
+        },
+        {
+          "times": ["14:00", "22:00", "6:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "生物残骸を１個消費する", "points": 700 }
+          ]
+        },
+        {
+          "times": ["15:00", "23:00", "7:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["16:00", "0:00", "8:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "生物残骸を１個消費する", "points": 700 }
+          ]
+        }
+      ]
+    },
+    "thursday": {
+      "label": "木曜日",
+      "slots": [
+        {
+          "times": ["9:00", "17:00", "1:00"],
+          "event": "蟻塚建設",
+          "reward_type": "building_speed",
+          "reward3_points": 16300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 900 }
+          ]
+        },
+        {
+          "times": ["10:00", "18:00", "2:00"],
+          "event": "特化アリを育成",
+          "reward_type": "special_ant",
+          "reward3_points": 4000000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "交換で変異体胞子1個を獲得する【特化アリ異変地で】", "points": 1000 },
+            { "label": "変異体胞子を１つ使う", "points": 2000 },
+            { "label": "10expを獲得する毎に", "points": 1 },
+            { "label": "任意の特化アリのスキルを１つアンロック", "points": 20000 },
+            { "label": "時限異変卵を１つ使う", "points": 200000 },
+            { "label": "特級異変卵を１つ使う", "points": 200000 },
+            { "label": "高級異変卵を１つ使う", "points": 50000 },
+            { "label": "通常異変卵を１つ使う", "points": 10000 },
+            { "label": "一匹の特化アリを８星にUPする", "points": 6000000 },
+            { "label": "一匹の特化アリを７星にUPする", "points": 4800000 },
+            { "label": "一匹の特化アリを６星にUPする", "points": 4000000 },
+            { "label": "一匹の特化アリを５星にUPする", "points": 3500000 },
+            { "label": "一匹の特化アリを４星にUPする", "points": 3000000 },
+            { "label": "一匹の特化アリを３星にUPする", "points": 2500000 },
+            { "label": "一匹の特化アリを２星にUPする", "points": 2000000 },
+            { "label": "一匹の特化アリを１星にUPする", "points": 1500000 }
+          ]
+        },
+        {
+          "times": ["11:00", "19:00", "3:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["12:00", "20:00", "4:00"],
+          "event": "特化アリを育成",
+          "reward_type": "special_ant",
+          "reward3_points": 4000000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "交換で変異体胞子1個を獲得する【特化アリ異変地で】", "points": 1000 },
+            { "label": "変異体胞子を１つ使う", "points": 2000 },
+            { "label": "10expを獲得する毎に", "points": 1 },
+            { "label": "任意の特化アリのスキルを１つアンロック", "points": 20000 },
+            { "label": "時限異変卵を１つ使う", "points": 200000 },
+            { "label": "特級異変卵を１つ使う", "points": 200000 },
+            { "label": "高級異変卵を１つ使う", "points": 50000 },
+            { "label": "通常異変卵を１つ使う", "points": 10000 },
+            { "label": "一匹の特化アリを８星にUPする", "points": 6000000 },
+            { "label": "一匹の特化アリを７星にUPする", "points": 4800000 },
+            { "label": "一匹の特化アリを６星にUPする", "points": 4000000 },
+            { "label": "一匹の特化アリを５星にUPする", "points": 3500000 },
+            { "label": "一匹の特化アリを４星にUPする", "points": 3000000 },
+            { "label": "一匹の特化アリを３星にUPする", "points": 2500000 },
+            { "label": "一匹の特化アリを２星にUPする", "points": 2000000 },
+            { "label": "一匹の特化アリを１星にUPする", "points": 1500000 }
+          ]
+        },
+        {
+          "times": ["13:00", "21:00", "5:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["14:00", "22:00", "6:00"],
+          "event": "特化アリを育成",
+          "reward_type": "special_ant",
+          "reward3_points": 4000000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "交換で変異体胞子1個を獲得する【特化アリ異変地で】", "points": 1000 },
+            { "label": "変異体胞子を１つ使う", "points": 2000 },
+            { "label": "10expを獲得する毎に", "points": 1 },
+            { "label": "任意の特化アリのスキルを１つアンロック", "points": 20000 },
+            { "label": "時限異変卵を１つ使う", "points": 200000 },
+            { "label": "特級異変卵を１つ使う", "points": 200000 },
+            { "label": "高級異変卵を１つ使う", "points": 50000 },
+            { "label": "通常異変卵を１つ使う", "points": 10000 },
+            { "label": "一匹の特化アリを８星にUPする", "points": 6000000 },
+            { "label": "一匹の特化アリを７星にUPする", "points": 4800000 },
+            { "label": "一匹の特化アリを６星にUPする", "points": 4000000 },
+            { "label": "一匹の特化アリを５星にUPする", "points": 3500000 },
+            { "label": "一匹の特化アリを４星にUPする", "points": 3000000 },
+            { "label": "一匹の特化アリを３星にUPする", "points": 2500000 },
+            { "label": "一匹の特化アリを２星にUPする", "points": 2000000 },
+            { "label": "一匹の特化アリを１星にUPする", "points": 1500000 }
+          ]
+        },
+        {
+          "times": ["15:00", "23:00", "7:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["16:00", "0:00", "8:00"],
+          "event": "特化アリを育成",
+          "reward_type": "special_ant",
+          "reward3_points": 4000000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "交換で変異体胞子1個を獲得する【特化アリ異変地で】", "points": 1000 },
+            { "label": "変異体胞子を１つ使う", "points": 2000 },
+            { "label": "10expを獲得する毎に", "points": 1 },
+            { "label": "任意の特化アリのスキルを１つアンロック", "points": 20000 },
+            { "label": "時限異変卵を１つ使う", "points": 200000 },
+            { "label": "特級異変卵を１つ使う", "points": 200000 },
+            { "label": "高級異変卵を１つ使う", "points": 50000 },
+            { "label": "通常異変卵を１つ使う", "points": 10000 },
+            { "label": "一匹の特化アリを８星にUPする", "points": 6000000 },
+            { "label": "一匹の特化アリを７星にUPする", "points": 4800000 },
+            { "label": "一匹の特化アリを６星にUPする", "points": 4000000 },
+            { "label": "一匹の特化アリを５星にUPする", "points": 3500000 },
+            { "label": "一匹の特化アリを４星にUPする", "points": 3000000 },
+            { "label": "一匹の特化アリを３星にUPする", "points": 2500000 },
+            { "label": "一匹の特化アリを２星にUPする", "points": 2000000 },
+            { "label": "一匹の特化アリを１星にUPする", "points": 1500000 }
+          ]
+        }
+      ]
+    },
+    "friday": {
+      "label": "金曜日",
+      "slots": [
+        {
+          "times": ["9:00", "17:00", "1:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["10:00", "18:00", "2:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["11:00", "19:00", "3:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["12:00", "20:00", "4:00"],
+          "event": "兵隊アリを孵化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ遺伝物質Ⅳを消耗", "points": 10000 },
+            { "label": "一つ遺伝物質Ⅲを消耗", "points": 4000 },
+            { "label": "一つ遺伝物質Ⅱを消耗", "points": 1000 },
+            { "label": "一つ遺伝物質Ⅰを消耗", "points": 200 },
+            { "label": "１つ高等DNAを消耗します", "points": 10000 },
+            { "label": "１つDNAを消耗します", "points": 2000 }
+          ]
+        },
+        {
+          "times": ["13:00", "21:00", "5:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["14:00", "22:00", "6:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ遺伝物質Ⅳを消耗", "points": 10000 },
+            { "label": "一つ遺伝物質Ⅲを消耗", "points": 4000 },
+            { "label": "一つ遺伝物質Ⅱを消耗", "points": 1000 },
+            { "label": "一つ遺伝物質Ⅰを消耗", "points": 200 },
+            { "label": "１つ高等DNAを消耗します", "points": 10000 },
+            { "label": "１つDNAを消耗します", "points": 2000 }
+          ]
+        },
+        {
+          "times": ["15:00", "23:00", "7:00"],
+          "event": "コロニー進化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 }
+          ]
+        },
+        {
+          "times": ["16:00", "0:00", "8:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "一つ遺伝物質Ⅳを消耗", "points": 10000 },
+            { "label": "一つ遺伝物質Ⅲを消耗", "points": 4000 },
+            { "label": "一つ遺伝物質Ⅱを消耗", "points": 1000 },
+            { "label": "一つ遺伝物質Ⅰを消耗", "points": 200 },
+            { "label": "１つ高等DNAを消耗します", "points": 10000 },
+            { "label": "１つDNAを消耗します", "points": 2000 }
+          ]
+        }
+      ]
+    },
+    "saturday": {
+      "label": "土曜日",
+      "slots": [
+        {
+          "times": ["9:00", "17:00", "1:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["10:00", "18:00", "2:00"],
+          "event": "コロニー進化",
+          "reward_type": "evolution_speed",
+          "reward3_points": 15300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 800 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "10星細菌を１つ獲得", "points": 4500000 },
+            { "label": "9星細菌を１つ獲得", "points": 3200000 },
+            { "label": "8星細菌を１つ獲得", "points": 2100000 },
+            { "label": "7星細菌を１つ獲得", "points": 1200000 },
+            { "label": "6星細菌を１つ獲得", "points": 500000 },
+            { "label": "5星細菌を１つ獲得", "points": 250000 },
+            { "label": "4星細菌を１つ獲得", "points": 100000 },
+            { "label": "3星細菌を１つ獲得", "points": 40000 },
+            { "label": "2星細菌を１つ獲得", "points": 10000 },
+            { "label": "10星細菌を１つ消耗", "points": 3150000 },
+            { "label": "9星細菌を１つ消耗", "points": 2240000 },
+            { "label": "8星細菌を１つ消耗", "points": 1400000 },
+            { "label": "7星細菌を１つ消耗", "points": 800000 },
+            { "label": "6星細菌を１つ消耗", "points": 300000 },
+            { "label": "5星細菌を１つ消耗", "points": 150000 },
+            { "label": "4星細菌を１つ消耗", "points": 60000 },
+            { "label": "3星細菌を１つ消耗", "points": 24000 },
+            { "label": "2星細菌を１つ消耗", "points": 6000 },
+            { "label": "細菌培養素Ⅳを１つ消耗", "points": 10000 },
+            { "label": "細菌培養素Ⅲを１つ消耗", "points": 4000 },
+            { "label": "細菌培養素Ⅱを１つ消耗", "points": 1000 },
+            { "label": "細菌培養素Ⅰを１つ消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["11:00", "19:00", "3:00"],
+          "event": "蟻塚建設",
+          "reward_type": "building_speed",
+          "reward3_points": 16300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 900 }
+          ]
+        },
+        {
+          "times": ["12:00", "20:00", "4:00"],
+          "event": "兵隊アリを孵化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "10星細菌を１つ獲得", "points": 4500000 },
+            { "label": "9星細菌を１つ獲得", "points": 3200000 },
+            { "label": "8星細菌を１つ獲得", "points": 2100000 },
+            { "label": "7星細菌を１つ獲得", "points": 1200000 },
+            { "label": "6星細菌を１つ獲得", "points": 500000 },
+            { "label": "5星細菌を１つ獲得", "points": 250000 },
+            { "label": "4星細菌を１つ獲得", "points": 100000 },
+            { "label": "3星細菌を１つ獲得", "points": 40000 },
+            { "label": "2星細菌を１つ獲得", "points": 10000 },
+            { "label": "10星細菌を１つ消耗", "points": 3150000 },
+            { "label": "9星細菌を１つ消耗", "points": 2240000 },
+            { "label": "8星細菌を１つ消耗", "points": 1400000 },
+            { "label": "7星細菌を１つ消耗", "points": 800000 },
+            { "label": "6星細菌を１つ消耗", "points": 300000 },
+            { "label": "5星細菌を１つ消耗", "points": 150000 },
+            { "label": "4星細菌を１つ消耗", "points": 60000 },
+            { "label": "3星細菌を１つ消耗", "points": 24000 },
+            { "label": "2星細菌を１つ消耗", "points": 6000 },
+            { "label": "細菌培養素Ⅳを１つ消耗", "points": 10000 },
+            { "label": "細菌培養素Ⅲを１つ消耗", "points": 4000 },
+            { "label": "細菌培養素Ⅱを１つ消耗", "points": 1000 },
+            { "label": "細菌培養素Ⅰを１つ消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["13:00", "21:00", "5:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["14:00", "22:00", "6:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "10星細菌を１つ獲得", "points": 4500000 },
+            { "label": "9星細菌を１つ獲得", "points": 3200000 },
+            { "label": "8星細菌を１つ獲得", "points": 2100000 },
+            { "label": "7星細菌を１つ獲得", "points": 1200000 },
+            { "label": "6星細菌を１つ獲得", "points": 500000 },
+            { "label": "5星細菌を１つ獲得", "points": 250000 },
+            { "label": "4星細菌を１つ獲得", "points": 100000 },
+            { "label": "3星細菌を１つ獲得", "points": 40000 },
+            { "label": "2星細菌を１つ獲得", "points": 10000 },
+            { "label": "10星細菌を１つ消耗", "points": 3150000 },
+            { "label": "9星細菌を１つ消耗", "points": 2240000 },
+            { "label": "8星細菌を１つ消耗", "points": 1400000 },
+            { "label": "7星細菌を１つ消耗", "points": 800000 },
+            { "label": "6星細菌を１つ消耗", "points": 300000 },
+            { "label": "5星細菌を１つ消耗", "points": 150000 },
+            { "label": "4星細菌を１つ消耗", "points": 60000 },
+            { "label": "3星細菌を１つ消耗", "points": 24000 },
+            { "label": "2星細菌を１つ消耗", "points": 6000 },
+            { "label": "細菌培養素Ⅳを１つ消耗", "points": 10000 },
+            { "label": "細菌培養素Ⅲを１つ消耗", "points": 4000 },
+            { "label": "細菌培養素Ⅱを１つ消耗", "points": 1000 },
+            { "label": "細菌培養素Ⅰを１つ消耗", "points": 200 }
+          ]
+        },
+        {
+          "times": ["15:00", "23:00", "7:00"],
+          "event": "蟻塚建設",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 }
+          ]
+        },
+        {
+          "times": ["16:00", "0:00", "8:00"],
+          "event": "コロニー進化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "レベル10兵隊アリを1匹孵化する", "points": 215 },
+            { "label": "レベル9兵隊アリを1匹孵化する", "points": 190 },
+            { "label": "レベル8兵隊アリを1匹孵化する", "points": 165 },
+            { "label": "レベル7兵隊アリを1匹孵化する", "points": 140 },
+            { "label": "レベル6兵隊アリを1匹孵化する", "points": 115 },
+            { "label": "レベル5兵隊アリを1匹孵化する", "points": 90 },
+            { "label": "レベル4兵隊アリを1匹孵化する", "points": 65 },
+            { "label": "レベル3兵隊アリを1匹孵化する", "points": 50 },
+            { "label": "レベル2兵隊アリを1匹孵化する", "points": 25 },
+            { "label": "レベル1兵隊アリを1匹孵化する", "points": 5 },
+            { "label": "一つ生命エッセンスを消耗", "points": 25000 },
+            { "label": "10星細菌を１つ獲得", "points": 4500000 },
+            { "label": "9星細菌を１つ獲得", "points": 3200000 },
+            { "label": "8星細菌を１つ獲得", "points": 2100000 },
+            { "label": "7星細菌を１つ獲得", "points": 1200000 },
+            { "label": "6星細菌を１つ獲得", "points": 500000 },
+            { "label": "5星細菌を１つ獲得", "points": 250000 },
+            { "label": "4星細菌を１つ獲得", "points": 100000 },
+            { "label": "3星細菌を１つ獲得", "points": 40000 },
+            { "label": "2星細菌を１つ獲得", "points": 10000 },
+            { "label": "10星細菌を１つ消耗", "points": 3150000 },
+            { "label": "9星細菌を１つ消耗", "points": 2240000 },
+            { "label": "8星細菌を１つ消耗", "points": 1400000 },
+            { "label": "7星細菌を１つ消耗", "points": 800000 },
+            { "label": "6星細菌を１つ消耗", "points": 300000 },
+            { "label": "5星細菌を１つ消耗", "points": 150000 },
+            { "label": "4星細菌を１つ消耗", "points": 60000 },
+            { "label": "3星細菌を１つ消耗", "points": 24000 },
+            { "label": "2星細菌を１つ消耗", "points": 6000 },
+            { "label": "細菌培養素Ⅳを１つ消耗", "points": 10000 },
+            { "label": "細菌培養素Ⅲを１つ消耗", "points": 4000 },
+            { "label": "細菌培養素Ⅱを１つ消耗", "points": 1000 },
+            { "label": "細菌培養素Ⅰを１つ消耗", "points": 200 }
+          ]
+        }
+      ]
+    },
+    "sunday": {
+      "label": "日曜日",
+      "slots": [
+        {
+          "times": ["9:00", "17:00", "1:00"],
+          "event": "蟻塚建設",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "note": "まにまにによると通常より低い5.2Mに設定されている（設定ミスの可能性あり）",
+          "tasks": [
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 900 }
+          ]
+        },
+        {
+          "times": ["10:00", "18:00", "2:00"],
+          "event": "全面に発展",
+          "reward_type": "evolution_speed",
+          "reward3_points": 15300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "中立生物を1匹孵化", "points": 200000 },
+            { "label": "中立生物飼料を1匹養殖する", "points": 100 },
+            { "label": "中立生物飼料を1匹消費", "points": 50 },
+            { "label": "分解で中立生物残骸を1個獲得", "points": 200 },
+            { "label": "中立生物残骸を1個消耗", "points": 400 },
+            { "label": "中立生物を11星に1回星UPする", "points": 10000000 },
+            { "label": "中立生物を10星に1回星UPする", "points": 8000000 },
+            { "label": "中立生物を9星に1回星UPする", "points": 6000000 },
+            { "label": "中立生物を8星に1回星UPする", "points": 4500000 },
+            { "label": "中立生物を7星に1回星UPする", "points": 3000000 },
+            { "label": "中立生物を6星に1回星UPする", "points": 2000000 },
+            { "label": "中立生物を5星に1回星UPする", "points": 1000000 },
+            { "label": "中立生物を4星に1回星UPする", "points": 800000 },
+            { "label": "中立生物を3星に1回星UPする", "points": 400000 },
+            { "label": "中立生物を2星に1回星UPする", "points": 200000 }
+          ]
+        },
+        {
+          "times": ["11:00", "19:00", "3:00"],
+          "event": "全面に発展",
+          "reward_type": "building_speed",
+          "reward3_points": 16300000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "建設LvUP時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["12:00", "20:00", "4:00"],
+          "event": "コロニー進化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "note": "まにまにによると通常より低い5.2Mに設定されている（設定ミスの可能性あり）",
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "進化する時に使った加速アイテム時間が1分毎に", "points": 800 },
+            { "label": "中立生物を1匹孵化", "points": 200000 },
+            { "label": "中立生物飼料を1匹養殖する", "points": 100 },
+            { "label": "中立生物飼料を1匹消費", "points": 50 },
+            { "label": "分解で中立生物残骸を1個獲得", "points": 200 },
+            { "label": "中立生物残骸を1個消耗", "points": 400 },
+            { "label": "中立生物を11星に1回星UPする", "points": 10000000 },
+            { "label": "中立生物を10星に1回星UPする", "points": 8000000 },
+            { "label": "中立生物を9星に1回星UPする", "points": 6000000 },
+            { "label": "中立生物を8星に1回星UPする", "points": 4500000 },
+            { "label": "中立生物を7星に1回星UPする", "points": 3000000 },
+            { "label": "中立生物を6星に1回星UPする", "points": 2000000 },
+            { "label": "中立生物を5星に1回星UPする", "points": 1000000 },
+            { "label": "中立生物を4星に1回星UPする", "points": 800000 },
+            { "label": "中立生物を3星に1回星UPする", "points": 400000 },
+            { "label": "中立生物を2星に1回星UPする", "points": 200000 }
+          ]
+        },
+        {
+          "times": ["13:00", "21:00", "5:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["14:00", "22:00", "6:00"],
+          "event": "兵隊アリを孵化",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": true,
+          "tasks": [
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "中立生物を1匹孵化", "points": 200000 },
+            { "label": "中立生物飼料を1匹養殖する", "points": 100 },
+            { "label": "中立生物飼料を1匹消費", "points": 50 },
+            { "label": "分解で中立生物残骸を1個獲得", "points": 200 },
+            { "label": "中立生物残骸を1個消耗", "points": 400 },
+            { "label": "中立生物を11星に1回星UPする", "points": 10000000 },
+            { "label": "中立生物を10星に1回星UPする", "points": 8000000 },
+            { "label": "中立生物を9星に1回星UPする", "points": 6000000 },
+            { "label": "中立生物を8星に1回星UPする", "points": 4500000 },
+            { "label": "中立生物を7星に1回星UPする", "points": 3000000 },
+            { "label": "中立生物を6星に1回星UPする", "points": 2000000 },
+            { "label": "中立生物を5星に1回星UPする", "points": 1000000 },
+            { "label": "中立生物を4星に1回星UPする", "points": 800000 },
+            { "label": "中立生物を3星に1回星UPする", "points": 400000 },
+            { "label": "中立生物を2星に1回星UPする", "points": 200000 }
+          ]
+        },
+        {
+          "times": ["15:00", "23:00", "7:00"],
+          "event": "全面に発展",
+          "reward_type": "low",
+          "reward3_points": 4240000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "進化戦闘力+1", "points": 400 },
+            { "label": "建築戦闘力+1", "points": 1000 },
+            { "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に", "points": 400 }
+          ]
+        },
+        {
+          "times": ["16:00", "0:00", "8:00"],
+          "event": "全面に発展",
+          "reward_type": "standard",
+          "reward3_points": 5200000,
+          "premium_transfer": false,
+          "tasks": [
+            { "label": "使った加速アイテム時間が1分毎に", "points": 400 },
+            { "label": "中立生物を1匹孵化", "points": 200000 },
+            { "label": "中立生物飼料を1匹養殖する", "points": 100 },
+            { "label": "中立生物飼料を1匹養殖する", "points": 100 },
+            { "label": "中立生物飼料を1匹消費", "points": 50 },
+            { "label": "分解で中立生物残骸を1個獲得", "points": 200 },
+            { "label": "中立生物残骸を1個消耗", "points": 400 },
+            { "label": "中立生物を11星に1回星UPする", "points": 10000000 },
+            { "label": "中立生物を10星に1回星UPする", "points": 8000000 },
+            { "label": "中立生物を9星に1回星UPする", "points": 6000000 },
+            { "label": "中立生物を8星に1回星UPする", "points": 4500000 },
+            { "label": "中立生物を7星に1回星UPする", "points": 3000000 },
+            { "label": "中立生物を6星に1回星UPする", "points": 2000000 },
+            { "label": "中立生物を5星に1回星UPする", "points": 1000000 },
+            { "label": "中立生物を4星に1回星UPする", "points": 800000 },
+            { "label": "中立生物を3星に1回星UPする", "points": 400000 },
+            { "label": "中立生物を2星に1回星UPする", "points": 200000 }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🐈 CAT [view]</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈</text></svg>">
-<link id="google-font" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Share+Tech+Mono&family=BIZ+UDGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link id="google-font" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=BIZ+UDGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 
 /* ============================================================
@@ -113,7 +113,7 @@ body {
 .header-right { display: flex; align-items: center; gap: 10px; }
 
 .clock {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Roboto Mono', monospace;
   font-size: var(--sz-xl);
   color: var(--text-bright);
   letter-spacing: 0.05em;
@@ -266,7 +266,7 @@ body {
   font-size: var(--sz-sm);
 }
 .reward-badge .r-num {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Roboto Mono', monospace;
   font-size: var(--sz-base);
   font-weight: bold;
 }
@@ -324,7 +324,7 @@ body {
 }
 
 .time-chip {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Roboto Mono', monospace;
   font-size: var(--sz-base);
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -359,7 +359,7 @@ body {
 }
 
 .reward-req-pts {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Roboto Mono', monospace;
   font-size: var(--sz-lg);
   font-weight: bold;
 }
@@ -410,7 +410,7 @@ body {
 }
 
 .task-pts {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Roboto Mono', monospace;
   font-size: var(--sz-base);
   color: var(--green);
   white-space: nowrap;
@@ -483,7 +483,7 @@ body {
 }
 
 .slot-times {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Roboto Mono', monospace;
   font-size: var(--sz-sm);
   color: var(--text-dim);
   min-width: 68px;
@@ -499,7 +499,7 @@ body {
 .slot-row.active .slot-event { color: var(--text-bright); font-weight: 700; }
 
 .slot-r3 {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Roboto Mono', monospace;
   font-size: var(--sz-sm);
   color: var(--text-dim);
   white-space: nowrap;
@@ -511,6 +511,94 @@ body {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ============================================================
+   スマホ用：タブ切り替えレイアウト
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ヘッダーをコンパクトに */
+  .header {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+  .header-title {
+    font-size: 10px;
+  }
+  .clock {
+    font-size: var(--sz-lg);
+  }
+  .clock-date {
+    font-size: 10px;
+  }
+  .btn-now {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  .btn-settings {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  /* リワードバーをコンパクトに */
+  .reward-bar {
+    padding: 6px 12px;
+    gap: 5px;
+  }
+  .reward-bar-label { display: none; }
+  .reward-badge {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+  .reward-bar-note { display: none; }
+
+  /* タブUI */
+  .mobile-tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-family: var(--font-main);
+    font-size: var(--sz-sm);
+    font-weight: 700;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mobile-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* メインレイアウトを縦1カラムに */
+  .main {
+    display: block;
+    height: calc(100vh - 130px);
+  }
+
+  .current-panel {
+    height: 100%;
+    border-right: none;
+  }
+
+  .schedule-panel {
+    height: 100%;
+  }
+
+  /* タブ切り替えで表示/非表示 */
+  .main.show-schedule .current-panel { display: none; }
+  .main.show-current .schedule-panel { display: none; }
+}
+
+/* PCではタブを非表示 */
+.mobile-tabs { display: none; }
 
 </style>
 </head>
@@ -575,8 +663,14 @@ body {
   <span class="reward-bar-note" id="reward-bar-note"></span>
 </div>
 
+<!-- モバイルタブ（スマホのみ表示） -->
+<div class="mobile-tabs" id="mobile-tabs">
+  <button class="mobile-tab active" id="tab-current" onclick="switchTab('current')">現在のスロット</button>
+  <button class="mobile-tab" id="tab-schedule" onclick="switchTab('schedule')">週間スケジュール 🐈</button>
+</div>
+
 <!-- メイン -->
-<div class="main">
+<div class="main show-current" id="main-content">
   <div class="current-panel" id="current-panel">
     <div style="color:var(--text-dim);padding:20px;">読み込み中...</div>
   </div>
@@ -584,6 +678,26 @@ body {
 </div>
 
 <script>
+// ============================================================
+// モバイルタブ切り替え
+// ============================================================
+function switchTab(tab) {
+  const main = document.querySelector('.main');
+  const tabCurrent = document.getElementById('tab-current');
+  const tabSchedule = document.getElementById('tab-schedule');
+  if (tab === 'current') {
+    main.classList.remove('show-schedule');
+    main.classList.add('show-current');
+    tabCurrent.classList.add('active');
+    tabSchedule.classList.remove('active');
+  } else {
+    main.classList.remove('show-current');
+    main.classList.add('show-schedule');
+    tabSchedule.classList.add('active');
+    tabCurrent.classList.remove('active');
+  }
+}
+
 // ============================================================
 // データベース読み込み（GitHub Pages運用時は外部JSONを参照）
 // ============================================================

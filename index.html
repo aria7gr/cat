@@ -12,7 +12,7 @@
    CSS変数：テーマ定義
    ============================================================ */
 
-/* アクセシブルテーマ（デフォルト） */
+/* アクセシブルテーマ(デフォルト) */
 :root, [data-theme="accessible"] {
   --bg: #1a1a2e;
   --surface: #242440;
@@ -440,7 +440,7 @@ body {
 }
 
 .schedule-header {
-  padding: 10px 14px;
+  padding: 10px 14px 6px;
   font-size: var(--sz-sm);
   color: var(--text-dim);
   letter-spacing: 0.1em;
@@ -450,6 +450,37 @@ body {
   background: var(--surface);
   z-index: 10;
 }
+
+.day-jump {
+  display: flex;
+  gap: 4px;
+  padding: 6px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 33px;
+  background: var(--surface);
+  z-index: 10;
+}
+
+.day-jump-btn {
+  flex: 1;
+  min-width: 36px;
+  min-height: 36px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: var(--font-main);
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.day-jump-btn:hover { border-color: var(--accent); color: var(--accent); }
+.day-jump-btn.today { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
 .day-section { border-bottom: 1px solid var(--border); }
 
@@ -462,7 +493,7 @@ body {
   background: rgba(255,255,255,0.03);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 33px;
+  top: 83px;
   z-index: 9;
 }
 
@@ -665,7 +696,7 @@ body {
   <span class="reward-bar-note" id="reward-bar-note"></span>
 </div>
 
-<!-- モバイルタブ（スマホのみ表示） -->
+<!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
   <button class="mobile-tab active" id="tab-current" onclick="switchTab('current')">現在のスロット</button>
   <button class="mobile-tab" id="tab-schedule" onclick="switchTab('schedule')">週間スケジュール 🐈</button>
@@ -680,6 +711,11 @@ body {
 </div>
 
 <script>
+function jumpToDay(dayKey) {
+  const el = document.getElementById('day-' + dayKey);
+  if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
 // ============================================================
 // モバイルタブ切り替え
 // ============================================================
@@ -701,7 +737,7 @@ function switchTab(tab) {
 }
 
 // ============================================================
-// データベース読み込み（GitHub Pages運用時は外部JSONを参照）
+// データベース読み込み(GitHub Pages運用時は外部JSONを参照)
 // ============================================================
 const DB_URL = 'ca_database.json';
 let DB = null;
@@ -711,7 +747,7 @@ async function loadDB() {
     const res = await fetch(DB_URL);
     DB = await res.json();
   } catch(e) {
-    // フォールバック：インライン最小データ（読み込み失敗時）
+    // フォールバック：インライン最小データ(読み込み失敗時)
     console.error('DB読み込み失敗:', e);
     document.getElementById('current-panel').innerHTML =
       '<div style="color:var(--r3-color);padding:20px;">⚠ ca_database.json の読み込みに失敗しました。<br>同じフォルダに ca_database.json があるか確認してください。</div>';
@@ -837,7 +873,7 @@ function renderCurrent(dayKey, slotIdx) {
   document.getElementById('rb1').textContent = fmtPts(rtype.reward1);
   document.getElementById('rb2').textContent = fmtPts(rtype.reward2);
   document.getElementById('rb3').textContent = fmtPts(slot.reward3_points);
-  document.getElementById('reward-bar-note').textContent = '（' + rtype.label + '）';
+  document.getElementById('reward-bar-note').textContent = '(' + rtype.label + ')';
 
   const viewingBadge = isNow ? '' : '<span class="viewing-badge">参照中</span>';
   const noteHtml = slot.note
@@ -875,7 +911,7 @@ function renderCurrent(dayKey, slotIdx) {
       </div>
     </div>
     ${noteHtml}
-    <div class="tasks-title">タスク一覧（${slot.tasks.length}件）</div>
+    <div class="tasks-title">タスク一覧(${slot.tasks.length}件)</div>
     ${tasksHtml}
   `;
 
@@ -892,11 +928,21 @@ function renderCurrent(dayKey, slotIdx) {
 function renderSchedule() {
   const panel = document.getElementById('schedule-panel');
   const cur = getCurrentSlot();
-  let html = '<div class="schedule-header">週間スケジュール（タップで詳細表示）</div>';
+  const dayLabels = { sunday:'日', monday:'月', tuesday:'火', wednesday:'水', thursday:'木', friday:'金', saturday:'土' };
+
+  let html = '<div class="schedule-header">週間スケジュール (タップで詳細表示)</div>';
+
+  // 曜日ジャンプボタン
+  html += '<div class="day-jump">';
+  for (const dayKey of DAY_KEYS) {
+    const isToday = cur.dayKey === dayKey;
+    html += `<button class="day-jump-btn ${isToday?'today':''}" onclick="jumpToDay('${dayKey}')">${dayLabels[dayKey]}</button>`;
+  }
+  html += '</div>';
 
   for (const dayKey of DAY_KEYS) {
     const day = DB.schedule[dayKey];
-    html += `<div class="day-section"><div class="day-label">${day.label} 🐈</div>`;
+    html += `<div class="day-section" id="day-${dayKey}"><div class="day-label">${day.label} 🐈</div>`;
     day.slots.forEach((slot, i) => {
       const isActive = cur.dayKey === dayKey && cur.slotIdx === i;
       html += `<div class="slot-row ${isActive?'active':''}" data-day="${dayKey}" data-slot="${i}"
@@ -925,9 +971,9 @@ function updateClock() {
 
   const days = ['日','月','火','水','木','金','土'];
   document.getElementById('clock-date').textContent =
-    `${jst.getFullYear()}/${jst.getMonth()+1}/${jst.getDate()}（${days[jst.getDay()]}）JST`;
+    `${jst.getFullYear()}/${jst.getMonth()+1}/${jst.getDate()}(${days[jst.getDay()]})JST`;
 
-  // スロット切り替わり検出（毎時5分）
+  // スロット切り替わり検出(毎時5分)
   const cur = getCurrentSlot();
   const slotKey = `${cur.dayKey}-${cur.slotIdx}`;
   if (slotKey !== lastSlotKey) {

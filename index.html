@@ -1,3 +1,13 @@
+<!--
+  🐈 CAT [view] / チャトラ
+  Colony Action Tool - view
+
+  v1.0  2026.02.27  初回リリース。週間スケジュール・現在スロット自動検出・リワード閾値表示
+  v1.1  2026.02.27  2ファイル構成化・設定パネル・現在に戻るボタン・テーマ切替・ファビコン追加
+  v1.2  2026.02.28  曜日ラベルに🐈追加・CAT[view]表記・GitHub Pages対応(index.html)
+  v1.3  2026.03.01  数字フォントRoboto Mono化・スマホタブ対応・半角括弧統一・DB不要note削除
+  v1.4  2026.03.01  曜日ジャンプボタン・参照中グロウエフェクト・バージョン表記追加
+-->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -127,6 +137,13 @@ body {
   margin-top: 2px;
 }
 
+@keyframes sunsetGlow {
+  0%   { box-shadow: 0 0 6px 2px rgba(255,229,102,0.6), 0 0 16px 4px rgba(255,229,102,0.3); border-color: #ffe566; }
+  40%  { box-shadow: 0 0 8px 3px rgba(255,140,66,0.7),  0 0 20px 6px rgba(255,140,66,0.3);  border-color: #ff8c42; }
+  70%  { box-shadow: 0 0 8px 3px rgba(255,95,143,0.7),  0 0 20px 6px rgba(255,95,143,0.3);  border-color: #ff5f8f; }
+  100% { box-shadow: 0 0 6px 2px rgba(255,229,102,0.6), 0 0 16px 4px rgba(255,229,102,0.3); border-color: #ffe566; }
+}
+
 /* 現在に戻るボタン */
 .btn-now {
   background: var(--accent);
@@ -142,6 +159,10 @@ body {
   transition: opacity 0.2s;
 }
 .btn-now:hover { opacity: 0.85; }
+.btn-now.is-away {
+  border: 2px solid #ffe566;
+  animation: sunsetGlow 2.8s ease-in-out infinite;
+}
 
 /* 設定ボタン */
 .btn-settings {
@@ -628,6 +649,19 @@ body {
   .main.show-current .schedule-panel { display: none; }
 }
 
+/* バージョン表記 */
+.version-label {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 100;
+  font-family: var(--font-main);
+}
+
 /* PCではタブを非表示 */
 @media (min-width: 769px) {
   .mobile-tabs { display: none; }
@@ -695,6 +729,9 @@ body {
   <div class="reward-badge r3"><span>リワード3</span><span class="r-num" id="rb3">-</span></div>
   <span class="reward-bar-note" id="reward-bar-note"></span>
 </div>
+
+<!-- バージョン表記 -->
+<div class="version-label">Mar 01 '26 🐈 v1.4</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -868,6 +905,10 @@ function renderCurrent(dayKey, slotIdx) {
   const rtype = DB.reward_thresholds.types[slot.reward_type];
   const cur = getCurrentSlot();
   const isNow = (cur.dayKey === dayKey && cur.slotIdx === slotIdx);
+
+  // グロウエフェクト制御
+  const btnNow = document.querySelector('.btn-now');
+  if (btnNow) btnNow.classList.toggle('is-away', !isNow);
 
   // リワードバー更新
   document.getElementById('rb1').textContent = fmtPts(rtype.reward1);

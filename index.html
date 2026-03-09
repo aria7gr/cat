@@ -7,13 +7,14 @@
   v1.2  2026.02.28  曜日ラベルに🐈追加・CAT[view]表記・GitHub Pages対応(index.html)
   v1.3  2026.03.01  数字フォントRoboto Mono化・スマホタブ対応・半角括弧統一・DB不要note削除
   v1.4  2026.03.01  曜日ジャンプボタン・参照中グロウエフェクト・バージョン表記追加
+  v1.5  2026.03.08  ゲーム内曜日補正(JST9時切替対応)・タイトルタグ絵文字削除
 -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🐈 CAT [view]</title>
+<title>CAT [view]</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈</text></svg>">
 <link id="google-font" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=BIZ+UDGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -731,7 +732,7 @@ body {
 </div>
 
 <!-- バージョン表記 -->
-<div class="version-label">Mar 01 '26 🐈 v1.4</div>
+<div class="version-label">Mar 08 '26 🐈 v1.5</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -865,9 +866,21 @@ function getJST() {
   return new Date(new Date().toLocaleString('en-US', {timeZone: 'Asia/Tokyo'}));
 }
 
+// ゲーム内曜日取得（JST午前9時に切り替わり。0〜8時は前日扱い）
+function getGameDay(jst) {
+  const h = jst.getHours();
+  if (h < 9) {
+    // 前日扱い：1日前の曜日を返す
+    const prev = new Date(jst);
+    prev.setDate(prev.getDate() - 1);
+    return prev.getDay();
+  }
+  return jst.getDay();
+}
+
 function getCurrentSlot() {
   const jst = getJST();
-  const dayKey = DAY_KEYS[jst.getDay()];
+  const dayKey = DAY_KEYS[getGameDay(jst)];
   const h = jst.getHours();
   const slots = DB.schedule[dayKey].slots;
   for (let i = 0; i < slots.length; i++) {

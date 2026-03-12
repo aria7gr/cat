@@ -1148,7 +1148,9 @@ function renderSearchResults(results) {
 
   el.innerHTML = html;
   el.scrollIntoView({ block: 'start', behavior: 'smooth' });
-}(idx) {
+}
+
+function toggleOther(idx) {
   const el = document.getElementById(`other-${idx}`);
   const btn = el.previousElementSibling;
   if (el.classList.toggle('open')) {

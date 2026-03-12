@@ -10,6 +10,7 @@
   v1.5  2026.03.08  ゲーム内曜日補正(JST9時切替対応)・タイトルタグ絵文字削除
   v2.0  2026.03.08  検索機能追加(右パネル切替方式)・設定に表示件数追加・JSONに増幅結晶欠片追加
   v2.0.1  2026.03.12  検索結果カード調整(残り時間を分単位・該当時間チップ強調・文字サイズ調整)
+  v2.0.2  2026.03.12  検索結果を時間帯単位に分割・非該当時間チップを薄く・設定変更時に自動再描画・その他タスクを折りたたみ表示
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -710,6 +711,29 @@ body {
   font-weight: 700;
 }
 
+.time-chip.dim {
+  color: rgba(176,174,192,0.35);
+  border-color: rgba(74,74,112,0.35);
+}
+
+.result-toggle {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0 0;
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid rgba(100,100,150,0.2);
+  margin-top: 2px;
+  transition: color 0.15s;
+}
+.result-toggle:hover { color: var(--text); }
+
+.result-other-tasks { display: none; }
+.result-other-tasks.open { display: block; }
+
 
 /* ============================================================
    スマホ用：タブ切り替えレイアウト
@@ -860,7 +884,7 @@ body {
 </div>
 
 <!-- バージョン表記 -->
-<div class="version-label">Mar 12 '26 🐈 v2.0.1</div>
+<div class="version-label">Mar 12 '26 🐈 v2.0.2</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -1011,6 +1035,8 @@ function onMajorChange() {
   }
 }
 
+let _searchCards = [];
+
 function runSearch() {
   const major = document.getElementById('search-major').value;
   const minor = document.getElementById('search-minor').value;
@@ -1027,8 +1053,8 @@ function runSearch() {
     includeAccel = config.includeAccel;
   }
 
-  // 全スロットを検索
-  const results = [];
+  // 時間帯ごとにカードを生成
+  const cards = [];
   for (const dayKey of DAY_KEYS) {
     const day = DB.schedule[dayKey];
     day.slots.forEach((slot, slotIdx) => {
@@ -1036,56 +1062,35 @@ function runSearch() {
         keywords.some(kw => t.label.includes(kw)) ||
         (includeAccel && t.label === ACCEL_KEYWORD)
       );
-      if (matchedTasks.length > 0) {
-        results.push({ dayKey, slotIdx, slot, matchedTasks });
-      }
+      if (matchedTasks.length === 0) return;
+      slot.times.forEach(timeStr => {
+        cards.push({ dayKey, slotIdx, slot, matchedTasks, timeStr });
+      });
     });
   }
 
-  // 直近順に並べ替え
+  // 直近順ソート（時間帯単位、5分後基準）
   const now = getJST();
   const nowGameDay = getGameDay(now);
-  const nowHour = now.getHours();
-
-  function slotStartHour(slot) { return parseInt(slot.times[0]); }
-
-  function hoursUntil(dayKey, slot) {
-    const slotDay = DAY_KEYS.indexOf(dayKey);
-    const slotH = slotStartHour(slot);
-    let diff = (slotDay - nowGameDay + 7) % 7 * 24 + (slotH - nowHour);
-    if (diff < 0) diff += 7 * 24;
-    // 現在スロット内なら0
-    const cur = getCurrentSlot();
-    if (cur.dayKey === dayKey && cur.slotIdx === DAY_KEYS.indexOf(dayKey)) diff = 0;
-    return diff;
-  }
-
-  // 直近順ソート：該当時間の5分後までの残り分数で計算
   const nowMin = now.getHours() * 60 + now.getMinutes();
 
-  const sorted = results.map(r => {
-    const slotDay = DAY_KEYS.indexOf(r.dayKey);
-    // スロット内の各時間から直近のものを特定
-    let minMins = Infinity;
-    let targetHour = null;
-    r.slot.times.forEach(t => {
-      const h = parseInt(t);
-      const targetMin = (slotDay - nowGameDay + 7) % 7 * 24 * 60 + h * 60 + 5 - nowMin;
-      const adjusted = targetMin <= 0 ? targetMin + 7 * 24 * 60 : targetMin;
-      if (adjusted < minMins) {
-        minMins = adjusted;
-        targetHour = h;
-      }
-    });
-    return { ...r, minsUntil: minMins, targetHour };
+  const sorted = cards.map(c => {
+    const slotDay = DAY_KEYS.indexOf(c.dayKey);
+    const h = parseInt(c.timeStr);
+    let targetMin = (slotDay - nowGameDay + 7) % 7 * 24 * 60 + h * 60 + 5 - nowMin;
+    if (targetMin <= 0) targetMin += 7 * 24 * 60;
+    return { ...c, minsUntil: targetMin };
   }).sort((a, b) => a.minsUntil - b.minsUntil);
 
-  // 件数制限
+  _searchCards = sorted;
+  applySearchLimit();
+}
+
+function applySearchLimit() {
   const settings = loadSettings();
   const limit = parseInt(settings.searchLimit) || 8;
-  const limited = limit === 0 ? sorted : sorted.slice(0, limit);
-
-  renderSearchResults(limited, limit, sorted.length, minor || major);
+  const limited = limit === 0 ? _searchCards : _searchCards.slice(0, limit);
+  renderSearchResults(limited);
 }
 
 function fmtMinsUntil(mins) {
@@ -1101,43 +1106,57 @@ function fmtMinsUntil(mins) {
   return s;
 }
 
-function renderSearchResults(results, limit, total, label) {
+function renderSearchResults(results) {
   const el = document.getElementById('search-results');
-  if (results.length === 0) {
+  if (!results || results.length === 0) {
     el.innerHTML = `<div class="search-results-header">🐈 表示件数 0件</div><div style="color:var(--text-dim);font-size:var(--sz-sm);padding:10px 0;">該当するスロットが見つかりませんでした。</div>`;
     return;
   }
 
-  const displayCount = results.length;
-  let html = `<div class="search-results-header">🐈 表示件数 ${displayCount}件</div>`;
-
   const dayNames = { sunday:'日曜日', monday:'月曜日', tuesday:'火曜日', wednesday:'水曜日', thursday:'木曜日', friday:'金曜日', saturday:'土曜日' };
+  let html = `<div class="search-results-header">🐈 表示件数 ${results.length}件</div>`;
 
-  results.forEach(r => {
+  results.forEach((r, idx) => {
     const untilText = fmtMinsUntil(r.minsUntil);
-    html += `<div class="result-item" onclick="renderCurrent('${r.dayKey}',${r.slotIdx});switchTab('current');document.getElementById('ptab-schedule')&&(document.getElementById('ptab-schedule').classList.add('active'),switchPanelTab('schedule'))">`;
+    const targetH = parseInt(r.timeStr);
+    const otherTasks = r.slot.tasks.filter(t => !r.matchedTasks.includes(t));
+
+    html += `<div class="result-item" onclick="event.stopPropagation();renderCurrent('${r.dayKey}',${r.slotIdx});switchTab('current');switchPanelTab('schedule')">`;
     html += `<div class="result-header"><span class="result-day-slot">${dayNames[r.dayKey]} スロット${r.slotIdx+1}</span></div>`;
     html += `<div class="result-until">${untilText}</div>`;
-    // 時間チップ（該当時間を強調）
     html += `<div class="result-times">`;
     r.slot.times.forEach(t => {
       const h = parseInt(t);
-      const isTarget = h === r.targetHour;
-      html += `<span class="time-chip${isTarget ? ' current' : ''}">${h}:00</span>`;
+      const cls = h === targetH ? 'current' : 'dim';
+      html += `<span class="time-chip ${cls}">${h}:00</span>`;
     });
     html += `</div>`;
     html += `<div class="result-event">${r.slot.event}</div>`;
-    const otherTasks = r.slot.tasks.filter(t => !r.matchedTasks.includes(t));
     r.matchedTasks.forEach(t => {
       html += `<div class="result-task highlight"><span>${t.label}</span><span class="result-task-pts">${fmtPts(t.points)}</span></div>`;
     });
-    otherTasks.forEach(t => {
-      html += `<div class="result-task"><span>${t.label}</span><span class="result-task-pts">${fmtPts(t.points)}</span></div>`;
-    });
+    if (otherTasks.length > 0) {
+      html += `<button class="result-toggle" onclick="event.stopPropagation();toggleOther(${idx})">他${otherTasks.length}件 ▼</button>`;
+      html += `<div class="result-other-tasks" id="other-${idx}">`;
+      otherTasks.forEach(t => {
+        html += `<div class="result-task"><span>${t.label}</span><span class="result-task-pts">${fmtPts(t.points)}</span></div>`;
+      });
+      html += `</div>`;
+    }
     html += `</div>`;
   });
 
   el.innerHTML = html;
+}
+
+function toggleOther(idx) {
+  const el = document.getElementById(`other-${idx}`);
+  const btn = el.previousElementSibling;
+  if (el.classList.toggle('open')) {
+    btn.textContent = btn.textContent.replace('▼', '▲');
+  } else {
+    btn.textContent = btn.textContent.replace('▲', '▼');
+  }
 }
 
 // ============================================================
@@ -1192,6 +1211,10 @@ function applySetting(key, value, btn) {
   document.querySelectorAll(`.opt-btn[data-setting="${key}"]`).forEach(b => {
     b.classList.toggle('active', b.dataset.value === value);
   });
+  // 表示件数変更時に検索結果を自動再描画
+  if (key === 'searchLimit' && _searchCards.length > 0) {
+    applySearchLimit();
+  }
 }
 
 function syncSettingButtons(settings) {

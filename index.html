@@ -11,6 +11,7 @@
   v2.0  2026.03.08  検索機能追加(右パネル切替方式)・設定に表示件数追加・JSONに増幅結晶欠片追加
   v2.0.1  2026.03.12  検索結果カード調整(残り時間を分単位・該当時間チップ強調・文字サイズ調整)
   v2.0.2  2026.03.12  検索結果を時間帯単位に分割・非該当時間チップを薄く・設定変更時に自動再描画・その他タスクを折りたたみ表示
+  v2.0.3  2026.03.12  検索キーワードを正確なラベルに修正(誤ヒット解消)・大分類デフォルトを選択してくださいに修正・検索結果先頭へ自動スクロール
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -884,7 +885,7 @@ body {
 </div>
 
 <!-- バージョン表記 -->
-<div class="version-label">Mar 12 '26 🐈 v2.0.2</div>
+<div class="version-label">Mar 12 '26 🐈 v2.0.3</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -981,33 +982,33 @@ const SEARCH_CONFIG = {
   construction: {
     hasSub: true,
     subs: {
-      '建築戦闘力': { keywords: ['建築戦闘力'], includeAccel: false },
-      '建築加速': { keywords: ['建設LvUP時に使った加速'], includeAccel: true },
+      '建築戦闘力': { keywords: ['建築戦闘力+1'] },
+      '建築加速': { keywords: ['建設LvUP時に使った加速アイテム時間が1分毎に', '使った加速アイテム時間が1分毎に'] },
     }
   },
   evolution: {
     hasSub: true,
     subs: {
-      '進化戦闘力': { keywords: ['進化戦闘力'], includeAccel: false },
-      '進化加速': { keywords: ['進化する時に使った加速'], includeAccel: true },
-      '生物残骸': { keywords: ['生物残骸'], includeAccel: false },
-      '増幅結晶欠片': { keywords: ['増幅結晶欠片'], includeAccel: false },
+      '進化戦闘力': { keywords: ['進化戦闘力+1'] },
+      '進化加速': { keywords: ['進化する時に使った加速アイテム時間が1分毎に', '使った加速アイテム時間が1分毎に'] },
+      '生物残骸': { keywords: ['生物残骸を１個消費する', '分解で中立生物残骸を1個獲得', '中立生物残骸を1個消耗'] },
+      '増幅結晶欠片': { keywords: ['増幅結晶欠片を1個消費する'] },
     }
   },
   hatch: {
     hasSub: true,
     subs: {
-      '孵化数': { keywords: ['兵隊アリを1匹孵化'], includeAccel: false },
-      '孵化加速': { keywords: ['兵隊アリを孵化する時に使った加速'], includeAccel: true },
+      '孵化数': { keywords: ['兵隊アリを1匹孵化する'] },
+      '孵化加速': { keywords: ['兵隊アリを孵化する時に使った加速アイテム時間が1分毎に', '使った加速アイテム時間が1分毎に'] },
     }
   },
-  accel: { hasSub: false, keywords: ['使った加速アイテム時間が1分毎に'], includeAccel: false },
-  special: { hasSub: false, keywords: ['特化アリ','変異体胞子','異変卵'], includeAccel: false },
-  neutral: { hasSub: false, keywords: ['中立生物'], includeAccel: false },
-  fungi: { hasSub: false, keywords: ['菌糸','真菌培養素'], includeAccel: false },
-  cell: { hasSub: false, keywords: ['細胞'], includeAccel: false },
-  gene: { hasSub: false, keywords: ['遺伝物質','DNA'], includeAccel: false },
-  bacteria: { hasSub: false, keywords: ['細菌'], includeAccel: false },
+  accel: { hasSub: false, keywords: ['使った加速アイテム時間が1分毎に'] },
+  special: { hasSub: false, keywords: ['特化アリ', '変異体胞子', '異変卵'] },
+  neutral: { hasSub: false, keywords: ['中立生物'] },
+  fungi: { hasSub: false, keywords: ['菌糸', '真菌培養素', '生命エッセンス'] },
+  cell: { hasSub: false, keywords: ['細胞', '細胞液'] },
+  gene: { hasSub: false, keywords: ['遺伝物質', 'DNA'] },
+  bacteria: { hasSub: false, keywords: ['細菌'] },
 };
 
 const ACCEL_KEYWORD = '使った加速アイテム時間が1分毎に';
@@ -1017,6 +1018,7 @@ function onMajorChange() {
   const minorRow = document.getElementById('minor-row');
   const minorSel = document.getElementById('search-minor');
   document.getElementById('search-results').innerHTML = '';
+  _searchCards = [];
 
   if (!major || !SEARCH_CONFIG[major]) {
     minorRow.style.display = 'none';
@@ -1043,24 +1045,21 @@ function runSearch() {
   if (!major) return;
 
   const config = SEARCH_CONFIG[major];
-  let keywords, includeAccel;
+  let keywords;
   if (config.hasSub) {
     if (!minor) return;
     keywords = config.subs[minor].keywords;
-    includeAccel = config.subs[minor].includeAccel;
   } else {
     keywords = config.keywords;
-    includeAccel = config.includeAccel;
   }
 
-  // 時間帯ごとにカードを生成
+  // 時間帯ごとにカードを生成（完全一致）
   const cards = [];
   for (const dayKey of DAY_KEYS) {
     const day = DB.schedule[dayKey];
     day.slots.forEach((slot, slotIdx) => {
       const matchedTasks = slot.tasks.filter(t =>
-        keywords.some(kw => t.label.includes(kw)) ||
-        (includeAccel && t.label === ACCEL_KEYWORD)
+        keywords.some(kw => t.label === kw || t.label.includes(kw))
       );
       if (matchedTasks.length === 0) return;
       slot.times.forEach(timeStr => {
@@ -1110,6 +1109,7 @@ function renderSearchResults(results) {
   const el = document.getElementById('search-results');
   if (!results || results.length === 0) {
     el.innerHTML = `<div class="search-results-header">🐈 表示件数 0件</div><div style="color:var(--text-dim);font-size:var(--sz-sm);padding:10px 0;">該当するスロットが見つかりませんでした。</div>`;
+    el.scrollIntoView({ block: 'start', behavior: 'smooth' });
     return;
   }
 
@@ -1147,9 +1147,8 @@ function renderSearchResults(results) {
   });
 
   el.innerHTML = html;
-}
-
-function toggleOther(idx) {
+  el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}(idx) {
   const el = document.getElementById(`other-${idx}`);
   const btn = el.previousElementSibling;
   if (el.classList.toggle('open')) {
@@ -1445,6 +1444,15 @@ async function init() {
   // DB読み込み
   const ok = await loadDB();
   if (!ok) return;
+
+  // 検索パネルをリセット
+  const majorSel = document.getElementById('search-major');
+  const minorSel = document.getElementById('search-minor');
+  if (majorSel) majorSel.value = '';
+  if (minorSel) minorSel.value = '';
+  document.getElementById('minor-row').style.display = 'none';
+  document.getElementById('search-results').innerHTML = '';
+  _searchCards = [];
 
   // 描画
   renderSchedule();

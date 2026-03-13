@@ -13,6 +13,7 @@
   v2.0.2  2026.03.12  検索結果を時間帯単位に分割・非該当時間チップを薄く・設定変更時に自動再描画・その他タスクを折りたたみ表示
   v2.0.3  2026.03.12  検索キーワードを正確なラベルに修正(誤ヒット解消)・大分類デフォルトを選択してくださいに修正・検索結果先頭へ自動スクロール・ページ読み込み時に検索パネルリセット・toggleOther構文エラー修正
   v2.1    2026.03.13  検索残り時間計算をゲーム内時刻(JST9時基準)に修正・v2.0.xの修正をまとめて一区切り
+  v2.2    2026.03.13  検索結果マッチタスクの折りたたみ表示(簡潔/詳細)・設定に表示モード追加・PC版グリッド幅1fr 1fr・検索文字サイズ拡大
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -314,7 +315,7 @@ body {
    ============================================================ */
 .main {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 1fr;
   height: calc(100vh - 90px);
 }
 
@@ -665,7 +666,7 @@ body {
 .result-until { font-size: var(--sz-sm); color: var(--green); margin-bottom: 6px; }
 .result-event { font-size: var(--sz-base); color: var(--text-bright); margin-bottom: 6px; font-weight: 700; }
 .result-task {
-  font-size: var(--sz-sm);
+  font-size: var(--sz-base);
   color: var(--text-dim);
   padding: 3px 0;
   border-top: 1px solid rgba(100,100,150,0.2);
@@ -674,7 +675,7 @@ body {
   gap: 8px;
 }
 .result-task.highlight { color: var(--accent); }
-.result-task-pts { font-family: 'Roboto Mono', monospace; color: var(--green); white-space: nowrap; flex-shrink: 0; }
+.result-task-pts { font-family: 'Roboto Mono', monospace; color: var(--green); white-space: nowrap; flex-shrink: 0; font-size: var(--sz-base); }
 .result-day-slot {
   font-size: var(--sz-base);
   font-weight: 700;
@@ -718,8 +719,43 @@ body {
   border-color: rgba(74,74,112,0.35);
 }
 
-.result-toggle {
+/* マッチタスク折りたたみボタン（ゴールド強調） */
+.match-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 4px;
+  border: 1px solid var(--highlight-border);
+  background: var(--highlight);
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: var(--sz-base);
+  font-weight: 700;
+  margin-bottom: 4px;
+  text-align: left;
+  transition: background 0.15s;
+}
+.match-toggle:hover { background: rgba(240,208,96,0.22); }
+.match-toggle-label { line-height: 1.4; }
+.match-toggle-meta {
   font-size: var(--sz-sm);
+  font-weight: 400;
+  color: var(--accent2);
+  margin-left: 6px;
+  font-family: 'Roboto Mono', monospace;
+}
+.match-toggle-arrow { flex-shrink: 0; margin-left: 8px; }
+
+/* マッチタスク展開エリア */
+.match-tasks { display: none; margin-bottom: 4px; }
+.match-tasks.open { display: block; }
+
+/* 非マッチ折りたたみボタン（現行スタイル維持） */
+.result-toggle {
+  font-size: var(--sz-base);
   color: var(--text-dim);
   background: none;
   border: none;
@@ -872,6 +908,14 @@ body {
       </div>
     </div>
 
+    <div class="settings-group">
+      <div class="settings-group-label">検索結果</div>
+      <div class="settings-options">
+        <button class="opt-btn" data-setting="searchMode" data-value="compact" onclick="applySetting('searchMode','compact',this)">簡潔</button>
+        <button class="opt-btn" data-setting="searchMode" data-value="detail" onclick="applySetting('searchMode','detail',this)">詳細</button>
+      </div>
+    </div>
+
     <button class="settings-close" onclick="toggleSettings()">閉じる</button>
   </div>
 </div>
@@ -886,7 +930,7 @@ body {
 </div>
 
 <!-- バージョン表記 -->
-<div class="version-label">Mar 13 '26 🐈 v2.1</div>
+<div class="version-label">Mar 13 '26 🐈 v2.2</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -1112,6 +1156,41 @@ function fmtMinsUntil(mins) {
   return s;
 }
 
+// マッチタスクのサマリー情報を生成
+function buildMatchSummary(major, matchedTasks) {
+  const pts = matchedTasks.map(t => t.points);
+  const minPt = Math.min(...pts);
+  const maxPt = Math.max(...pts);
+  const ptRange = minPt === maxPt ? fmtPts(minPt) : `${fmtPts(minPt)}〜${fmtPts(maxPt)}`;
+  const count = matchedTasks.length;
+
+  // 中立生物：星範囲を表示
+  if (major === 'neutral') {
+    // ラベルから星番号を抽出
+    const stars = matchedTasks
+      .map(t => { const m = t.label.match(/(\d+)星/); return m ? parseInt(m[1]) : null; })
+      .filter(n => n !== null)
+      .sort((a, b) => a - b);
+    const starRange = stars.length >= 2 ? `星${stars[0]}〜${stars[stars.length-1]}` : stars.length === 1 ? `星${stars[0]}` : '';
+    return { label: `中立生物${starRange ? ' ' + starRange : ''}（${count}種）`, meta: `${ptRange}pt` };
+  }
+
+  // 特化アリ
+  if (major === 'special') {
+    return { label: `特化アリ（${count}種）`, meta: `${ptRange}pt` };
+  }
+
+  // 異変系4分類
+  const IKAI_LABELS = { fungi: '真菌', cell: '細胞', gene: '遺伝子', bacteria: '細菌' };
+  if (IKAI_LABELS[major]) {
+    return { label: `${IKAI_LABELS[major]}（${count}種）`, meta: `${ptRange}pt` };
+  }
+
+  // その他（建築・進化・孵化・汎用加速など）
+  const label = count === 1 ? matchedTasks[0].label : `（${count}種）`;
+  return { label, meta: `${ptRange}pt` };
+}
+
 function renderSearchResults(results) {
   const el = document.getElementById('search-results');
   if (!results || results.length === 0) {
@@ -1120,6 +1199,9 @@ function renderSearchResults(results) {
     return;
   }
 
+  const settings = loadSettings();
+  const isDetail = settings.searchMode === 'detail';
+  const major = document.getElementById('search-major').value;
   const dayNames = { sunday:'日曜日', monday:'月曜日', tuesday:'火曜日', wednesday:'水曜日', thursday:'木曜日', friday:'金曜日', saturday:'土曜日' };
   let html = `<div class="search-results-header">🐈 表示件数 ${results.length}件</div>`;
 
@@ -1127,6 +1209,9 @@ function renderSearchResults(results) {
     const untilText = fmtMinsUntil(r.minsUntil);
     const targetH = parseInt(r.timeStr);
     const otherTasks = r.slot.tasks.filter(t => !r.matchedTasks.includes(t));
+    const summary = buildMatchSummary(major, r.matchedTasks);
+    const matchOpen = isDetail ? ' open' : '';
+    const matchArrow = isDetail ? '▲' : '▼';
 
     html += `<div class="result-item" onclick="event.stopPropagation();renderCurrent('${r.dayKey}',${r.slotIdx});switchTab('current');switchPanelTab('schedule')">`;
     html += `<div class="result-header"><span class="result-day-slot">${dayNames[r.dayKey]} スロット${r.slotIdx+1}</span></div>`;
@@ -1139,12 +1224,24 @@ function renderSearchResults(results) {
     });
     html += `</div>`;
     html += `<div class="result-event">${r.slot.event}</div>`;
+
+    // マッチタスク折りたたみ
+    html += `<button class="match-toggle${matchOpen}" onclick="event.stopPropagation();toggleMatch(${idx})">`
+          + `<span class="match-toggle-label">${summary.label}<span class="match-toggle-meta">${summary.meta}</span></span>`
+          + `<span class="match-toggle-arrow">${matchArrow}</span>`
+          + `</button>`;
+    html += `<div class="match-tasks${matchOpen}" id="match-${idx}">`;
     r.matchedTasks.forEach(t => {
       html += `<div class="result-task highlight"><span>${t.label}</span><span class="result-task-pts">${fmtPts(t.points)}</span></div>`;
     });
+    html += `</div>`;
+
+    // 非マッチタスク折りたたみ（現行スタイル維持）
     if (otherTasks.length > 0) {
-      html += `<button class="result-toggle" onclick="event.stopPropagation();toggleOther(${idx})">他${otherTasks.length}件 ▼</button>`;
-      html += `<div class="result-other-tasks" id="other-${idx}">`;
+      const otherOpen = isDetail ? ' open' : '';
+      const otherArrow = isDetail ? '▲' : '▼';
+      html += `<button class="result-toggle${otherOpen ? ' open' : ''}" onclick="event.stopPropagation();toggleOther(${idx})">他${otherTasks.length}件 ${otherArrow}</button>`;
+      html += `<div class="result-other-tasks${otherOpen}" id="other-${idx}">`;
       otherTasks.forEach(t => {
         html += `<div class="result-task"><span>${t.label}</span><span class="result-task-pts">${fmtPts(t.points)}</span></div>`;
       });
@@ -1157,12 +1254,27 @@ function renderSearchResults(results) {
   el.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
+function toggleMatch(idx) {
+  const tasks = document.getElementById(`match-${idx}`);
+  const btn = tasks.previousElementSibling;
+  const arrowEl = btn.querySelector('.match-toggle-arrow');
+  if (tasks.classList.toggle('open')) {
+    btn.classList.add('open');
+    arrowEl.textContent = '▲';
+  } else {
+    btn.classList.remove('open');
+    arrowEl.textContent = '▼';
+  }
+}
+
 function toggleOther(idx) {
   const el = document.getElementById(`other-${idx}`);
   const btn = el.previousElementSibling;
   if (el.classList.toggle('open')) {
+    btn.classList.add('open');
     btn.textContent = btn.textContent.replace('▼', '▲');
   } else {
+    btn.classList.remove('open');
     btn.textContent = btn.textContent.replace('▲', '▼');
   }
 }
@@ -1191,7 +1303,7 @@ async function loadDB() {
 // 設定管理
 // ============================================================
 const SETTINGS_KEY = 'ca_tool_settings';
-const DEFAULTS = { theme: 'accessible', size: 'm', font: 'noto', searchLimit: '8' };
+const DEFAULTS = { theme: 'accessible', size: 'm', font: 'noto', searchLimit: '8', searchMode: 'compact' };
 
 function loadSettings() {
   try {
@@ -1219,14 +1331,14 @@ function applySetting(key, value, btn) {
   document.querySelectorAll(`.opt-btn[data-setting="${key}"]`).forEach(b => {
     b.classList.toggle('active', b.dataset.value === value);
   });
-  // 表示件数変更時に検索結果を自動再描画
-  if (key === 'searchLimit' && _searchCards.length > 0) {
+  // 表示件数・検索モード変更時に検索結果を自動再描画
+  if ((key === 'searchLimit' || key === 'searchMode') && _searchCards.length > 0) {
     applySearchLimit();
   }
 }
 
 function syncSettingButtons(settings) {
-  ['theme','size','font','searchLimit'].forEach(key => {
+  ['theme','size','font','searchLimit','searchMode'].forEach(key => {
     document.querySelectorAll(`.opt-btn[data-setting="${key}"]`).forEach(b => {
       b.classList.toggle('active', b.dataset.value === settings[key]);
     });

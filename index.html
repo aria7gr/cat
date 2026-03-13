@@ -14,6 +14,7 @@
   v2.0.3  2026.03.12  検索キーワードを正確なラベルに修正(誤ヒット解消)・大分類デフォルトを選択してくださいに修正・検索結果先頭へ自動スクロール・ページ読み込み時に検索パネルリセット・toggleOther構文エラー修正
   v2.1    2026.03.13  検索残り時間計算をゲーム内時刻(JST9時基準)に修正・v2.0.xの修正をまとめて一区切り
   v2.2    2026.03.13  検索結果マッチタスクの折りたたみ表示(簡潔/詳細)・設定に表示モード追加・PC版グリッド幅1fr 1fr・検索文字サイズ拡大
+  v2.2.1  2026.03.13  検索タブに↺リセット機能追加(検索中のみ表示切替)
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -930,7 +931,7 @@ body {
 </div>
 
 <!-- バージョン表記 -->
-<div class="version-label">Mar 13 '26 🐈 v2.2</div>
+<div class="version-label">Mar 13 '26 🐈 v2.2.1</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -948,7 +949,7 @@ body {
     <!-- PC版パネル切り替えタブ -->
     <div class="panel-tabs">
       <button class="panel-tab active" id="ptab-schedule" onclick="switchPanelTab('schedule')">週間スケジュール 🐈</button>
-      <button class="panel-tab" id="ptab-search" onclick="switchPanelTab('search')">🔍 検索</button>
+      <button class="panel-tab" id="ptab-search" onclick="resetOrSwitchSearch()">🔍 検索</button>
     </div>
     <!-- スケジュールパネル -->
     <div class="schedule-panel" id="schedule-panel"></div>
@@ -1001,6 +1002,34 @@ function switchPanelTab(tab) {
   } else {
     schedulePanel.style.display = 'none';
     searchPanel.classList.add('active');
+  }
+}
+
+// 検索タブクリック：検索中なら↺リセット、非アクティブなら通常切り替え
+function resetOrSwitchSearch() {
+  const tab = document.getElementById('ptab-search');
+  if (tab.classList.contains('active') && _searchCards.length > 0) {
+    resetSearch();
+  } else {
+    switchPanelTab('search');
+  }
+}
+
+function resetSearch() {
+  _searchCards = [];
+  document.getElementById('search-major').value = '';
+  document.getElementById('search-minor').value = '';
+  document.getElementById('minor-row').style.display = 'none';
+  document.getElementById('search-results').innerHTML = '';
+  updateSearchTabLabel();
+}
+
+function updateSearchTabLabel() {
+  const tab = document.getElementById('ptab-search');
+  if (_searchCards.length > 0) {
+    tab.textContent = '↺ リセット';
+  } else {
+    tab.textContent = '🔍 検索';
   }
 }
 
@@ -1141,6 +1170,7 @@ function applySearchLimit() {
   const limit = parseInt(settings.searchLimit) || 8;
   const limited = limit === 0 ? _searchCards : _searchCards.slice(0, limit);
   renderSearchResults(limited);
+  updateSearchTabLabel();
 }
 
 function fmtMinsUntil(mins) {

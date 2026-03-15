@@ -9,7 +9,7 @@
       "https://lilygamelife.com/the-ants-event-calendar/",
       "https://manimany.net/157"
     ],
-    "version": "260308"
+    "version": "260315"
   },
   "reward_thresholds": {
     "note": "女王Lv25のリワード必要ポイント。時間帯によって異なる。",
@@ -22,14 +22,14 @@
       },
       "building_speed": {
         "label": "建設加速あり（高難度）",
-        "reward1": 200000,
-        "reward2": 1200000,
+        "reward1": 300000,
+        "reward2": 2300000,
         "reward3": 16300000
       },
       "evolution_speed": {
         "label": "進化加速あり（高難度）",
-        "reward1": 100000,
-        "reward2": 1100000,
+        "reward1": 300000,
+        "reward2": 2300000,
         "reward3": 15300000
       },
       "special_ant": {

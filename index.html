@@ -15,6 +15,7 @@
   v2.1    2026.03.13  検索残り時間計算をゲーム内時刻(JST9時基準)に修正・v2.0.xの修正をまとめて一区切り
   v2.2    2026.03.13  検索結果マッチタスクの折りたたみ表示(簡潔/詳細)・設定に表示モード追加・PC版グリッド幅1fr 1fr・検索文字サイズ拡大
   v2.2.1  2026.03.13  検索タブに↺リセット機能追加(検索中のみ表示切替)
+  v2.2.2  2026.03.15  検索キーワードを完全一致のみに変更(加速系の誤ヒット修正)
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -931,7 +932,7 @@ body {
 </div>
 
 <!-- バージョン表記 -->
-<div class="version-label">Mar 13 '26 🐈 v2.2.1</div>
+<div class="version-label">Mar 15 '26 🐈 v2.2.2</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -1056,33 +1057,60 @@ const SEARCH_CONFIG = {
   construction: {
     hasSub: true,
     subs: {
-      '建築戦闘力': { keywords: ['建築戦闘力+1'] },
-      '建築加速': { keywords: ['建設LvUP時に使った加速アイテム時間が1分毎に', '使った加速アイテム時間が1分毎に'] },
+      '建築戦闘力': { keywords: [{ kw: '建築戦闘力+1', exact: true }] },
+      '建築加速': { keywords: [
+        { kw: '建設LvUP時に使った加速アイテム時間が1分毎に', exact: true },
+        { kw: '使った加速アイテム時間が1分毎に', exact: true }
+      ]},
     }
   },
   evolution: {
     hasSub: true,
     subs: {
-      '進化戦闘力': { keywords: ['進化戦闘力+1'] },
-      '進化加速': { keywords: ['進化する時に使った加速アイテム時間が1分毎に', '使った加速アイテム時間が1分毎に'] },
-      '生物残骸': { keywords: ['生物残骸を１個消費する', '分解で中立生物残骸を1個獲得', '中立生物残骸を1個消耗'] },
-      '増幅結晶欠片': { keywords: ['増幅結晶欠片を1個消費する'] },
+      '進化戦闘力': { keywords: [{ kw: '進化戦闘力+1', exact: true }] },
+      '進化加速': { keywords: [
+        { kw: '進化する時に使った加速アイテム時間が1分毎に', exact: true },
+        { kw: '使った加速アイテム時間が1分毎に', exact: true }
+      ]},
+      '生物残骸': { keywords: [
+        { kw: '生物残骸を１個消費する', exact: true },
+        { kw: '分解で中立生物残骸を1個獲得', exact: true },
+        { kw: '中立生物残骸を1個消耗', exact: true }
+      ]},
+      '増幅結晶欠片': { keywords: [{ kw: '増幅結晶欠片を1個消費する', exact: true }] },
     }
   },
   hatch: {
     hasSub: true,
     subs: {
-      '孵化数': { keywords: ['兵隊アリを1匹孵化する'] },
-      '孵化加速': { keywords: ['兵隊アリを孵化する時に使った加速アイテム時間が1分毎に', '使った加速アイテム時間が1分毎に'] },
+      '孵化数': { keywords: [{ kw: '兵隊アリを1匹孵化する', exact: false }] },
+      '孵化加速': { keywords: [
+        { kw: '兵隊アリを孵化する時に使った加速アイテム時間が1分毎に', exact: true },
+        { kw: '使った加速アイテム時間が1分毎に', exact: true }
+      ]},
     }
   },
-  accel: { hasSub: false, keywords: ['使った加速アイテム時間が1分毎に'] },
-  special: { hasSub: false, keywords: ['特化アリ', '変異体胞子', '異変卵'] },
-  neutral: { hasSub: false, keywords: ['中立生物'] },
-  fungi: { hasSub: false, keywords: ['菌糸', '真菌培養素', '生命エッセンス'] },
-  cell: { hasSub: false, keywords: ['細胞', '細胞液'] },
-  gene: { hasSub: false, keywords: ['遺伝物質', 'DNA'] },
-  bacteria: { hasSub: false, keywords: ['細菌'] },
+  accel: { hasSub: false, keywords: [{ kw: '使った加速アイテム時間が1分毎に', exact: true }] },
+  special: { hasSub: false, keywords: [
+    { kw: '特化アリ', exact: false },
+    { kw: '変異体胞子', exact: false },
+    { kw: '異変卵', exact: false }
+  ]},
+  neutral: { hasSub: false, keywords: [{ kw: '中立生物', exact: false }] },
+  fungi: { hasSub: false, keywords: [
+    { kw: '菌糸', exact: false },
+    { kw: '真菌培養素', exact: false },
+    { kw: '生命エッセンス', exact: false }
+  ]},
+  cell: { hasSub: false, keywords: [
+    { kw: '細胞', exact: false },
+    { kw: '細胞液', exact: false }
+  ]},
+  gene: { hasSub: false, keywords: [
+    { kw: '遺伝物質', exact: false },
+    { kw: 'DNA', exact: false }
+  ]},
+  bacteria: { hasSub: false, keywords: [{ kw: '細菌', exact: false }] },
 };
 
 const ACCEL_KEYWORD = '使った加速アイテム時間が1分毎に';
@@ -1133,7 +1161,7 @@ function runSearch() {
     const day = DB.schedule[dayKey];
     day.slots.forEach((slot, slotIdx) => {
       const matchedTasks = slot.tasks.filter(t =>
-        keywords.some(kw => t.label === kw || t.label.includes(kw))
+        keywords.some(({ kw, exact }) => exact ? t.label === kw : t.label.includes(kw))
       );
       if (matchedTasks.length === 0) return;
       slot.times.forEach(timeStr => {

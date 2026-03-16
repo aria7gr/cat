@@ -611,14 +611,11 @@ function getGameTime() {
   const jstH = now.getHours();
   const jstM = now.getMinutes();
   const jstS = now.getSeconds();
-  const totalMin = jstH * 60 + jstM;
-  const gameMin = ((totalMin - 9 * 60) + 24 * 60) % (24 * 60);
-  const gameH = Math.floor(gameMin / 60);
-  const gameM = gameMin % 60;
   const days = ['日', '月', '火', '水', '木', '金', '土'];
+  // JST 0:00〜8:59 は前日扱い（ゲーム内切替は9:00）
   let d = now.getDay();
-  if (totalMin < 9 * 60) d = (d - 1 + 7) % 7;
-  return { h: gameH, m: gameM, s: jstS, dayIdx: d, dayLabel: days[d] + '曜日' };
+  if (jstH < 9) d = (d - 1 + 7) % 7;
+  return { h: jstH, m: jstM, s: jstS, dayIdx: d, dayLabel: days[d] + '曜日' };
 }
 
 function getJSTStr() {

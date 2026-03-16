@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<!--
+  kuro_mig1.0.html
+  Colony Action Tool - Building Migration Tool
+  Mar 16 '26 🐾 v1.0
+  初回リリース：建築スロット8個・加速逆算・リワード達成状況・2ページ切替
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAT [building]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #111113;
+  --surface:   #1a1a1f;
+  --surface2:  #242428;
+  --surface3:  #2e2e34;
+  --border:    #3a3a44;
+  --text:      #e8e4f0;
+  --text-dim:  #8a8a9a;
+  --text-bright: #ffffff;
+  --accent:    #c8b8e8;
+  --accent2:   #ddd0f8;
+  --green:     #a0d0c0;
+  --r1-color:  #80c898;
+  --r2-color:  #c8b8e8;
+  --r3-color:  #e89878;
+  --checked-border: rgba(200,184,232,0.7);
+  --checked-bg:     rgba(200,184,232,0.07);
+  --font-main: 'Noto Sans JP', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+  --sz-sm:  12px;
+  --sz-base: 15px;
+  --sz-lg:  17px;
+  --sz-xl:  22px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-main);
+  font-size: var(--sz-base);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ============================================================
+   ヘッダー
+   ============================================================ */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-icon { font-size: 20px; line-height: 1; }
+.header-title { font-size: var(--sz-sm); color: var(--text-dim); letter-spacing: 0.08em; }
+.header-name { font-size: var(--sz-lg); font-weight: 700; color: var(--text-bright); }
+
+.header-clock { margin-left: auto; text-align: right; }
+.clock-time { font-family: var(--font-mono); font-size: var(--sz-xl); color: var(--text-bright); }
+.clock-day  { font-size: var(--sz-sm); color: var(--accent); }
+
+/* ページ切り替えタブ */
+.page-tabs {
+  display: flex;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  gap: 4px;
+}
+.page-tab {
+  padding: 8px 20px;
+  font-size: var(--sz-sm);
+  font-family: var(--font-main);
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.04em;
+}
+.page-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.page-tab:hover:not(.active) { color: var(--text); }
+
+/* ============================================================
+   現在スロット情報バー
+   ============================================================ */
+.slot-bar {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.slot-bar-event {
+  font-size: var(--sz-base);
+  font-weight: 700;
+  color: var(--text-bright);
+}
+.slot-bar-time {
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+}
+.slot-bar-tasks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.slot-task-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface3);
+  font-size: var(--sz-sm);
+}
+.slot-task-chip .chip-pts {
+  font-family: var(--font-mono);
+  color: var(--green);
+}
+
+/* ============================================================
+   メインコンテンツ
+   ============================================================ */
+.main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 16px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================================
+   現在ポイント & リワード
+   ============================================================ */
+.reward-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.card-title {
+  font-size: var(--sz-sm);
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.current-pts-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.current-pts-input {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--sz-xl);
+  width: 180px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.current-pts-input:focus { border-color: var(--accent); }
+.current-pts-input::placeholder { color: var(--text-dim); opacity: 0.5; font-size: var(--sz-base); }
+.pts-label { font-size: var(--sz-sm); color: var(--text-dim); }
+
+.reward-rows { display: flex; flex-direction: column; gap: 9px; }
+.reward-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.reward-row-label {
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  width: 28px;
+  flex-shrink: 0;
+}
+.reward-row-label.r1 { color: var(--r1-color); }
+.reward-row-label.r2 { color: var(--r2-color); }
+.reward-row-label.r3 { color: var(--r3-color); }
+.reward-threshold {
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  width: 52px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.reward-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.reward-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.reward-bar-fill.r1 { background: var(--r1-color); }
+.reward-bar-fill.r2 { background: var(--r2-color); }
+.reward-bar-fill.r3 { background: var(--r3-color); }
+.reward-remain {
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.reward-remain.r1 { color: var(--r1-color); }
+.reward-remain.r2 { color: var(--r2-color); }
+.reward-remain.r3 { color: var(--r3-color); }
+.reward-remain.achieved { color: var(--green); }
+
+/* ============================================================
+   加速逆算セクション
+   ============================================================ */
+.accel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.accel-rows { display: flex; flex-direction: column; gap: 8px; }
+.accel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.accel-task-label {
+  font-size: var(--sz-sm);
+  color: var(--text);
+  flex: 1;
+  min-width: 160px;
+}
+.accel-pts-label {
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  color: var(--green);
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.accel-target-select {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  width: 56px;
+  text-align: center;
+}
+.accel-target-select:focus { border-color: var(--accent); }
+.accel-result-wrap { display: flex; align-items: baseline; gap: 4px; }
+.accel-result {
+  font-family: var(--font-mono);
+  font-size: var(--sz-lg);
+  color: var(--green);
+  font-weight: 500;
+  min-width: 60px;
+  text-align: right;
+}
+.accel-result.achieved { color: var(--r1-color); }
+.accel-result-unit { font-size: var(--sz-sm); color: var(--text-dim); }
+
+/* 加速なしメッセージ */
+.no-accel {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  padding: 8px 4px;
+  font-style: italic;
+}
+
+/* ============================================================
+   建築スロット
+   ============================================================ */
+.slots-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.slot-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 11px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.slot-card.checked {
+  border-color: var(--checked-border);
+  background: var(--checked-bg);
+}
+
+.slot-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.slot-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.slot-label {
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  color: var(--text-dim);
+  flex: 1;
+}
+.slot-ca-pts {
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  color: var(--green);
+}
+.slot-ca-pts.empty { color: var(--text-dim); opacity: 0.4; }
+
+.slot-fields { display: flex; flex-direction: column; gap: 5px; }
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.field-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 56px;
+  flex-shrink: 0;
+}
+.field-input {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 7px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-input::placeholder { color: var(--text-dim); opacity: 0.45; }
+
+.field-result {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--green);
+  padding: 4px 7px;
+  background: var(--bg);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  min-width: 0;
+}
+.field-result.empty { color: var(--text-dim); opacity: 0.4; }
+
+.slot-countdown {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.04em;
+  min-height: 18px;
+}
+.slot-countdown.done { color: var(--r1-color); }
+.slot-countdown.empty { color: transparent; }
+
+/* ============================================================
+   合計ポイント表示
+   ============================================================ */
+.total-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.total-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.total-label { font-size: var(--sz-sm); color: var(--text-dim); }
+.total-num {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  color: var(--text-bright);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.total-pts-unit { font-size: var(--sz-sm); color: var(--text-dim); }
+.total-note {
+  text-align: center;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   バージョン
+   ============================================================ */
+.version-label {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  opacity: 0.5;
+  pointer-events: none;
+  font-family: var(--font-main);
+}
+
+/* ============================================================
+   スマホ
+   ============================================================ */
+@media (max-width: 540px) {
+  .slots-grid { grid-template-columns: 1fr; }
+  .slot-bar-tasks { display: none; }
+  .header-name { font-size: var(--sz-base); }
+}
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <span class="header-icon">🐾</span>
+  <div>
+    <div class="header-title">Colony Action Tool</div>
+    <div class="header-name">[building]</div>
+  </div>
+  <div class="header-clock">
+    <div class="clock-time" id="clock-time">--:--</div>
+    <div class="clock-day" id="clock-day">--</div>
+  </div>
+</div>
+
+<!-- ページ切り替えタブ -->
+<div class="page-tabs">
+  <button class="page-tab active" onclick="switchPage(0)">メイン</button>
+  <button class="page-tab" onclick="switchPage(1)">サブ</button>
+</div>
+
+<!-- 現在スロット情報バー -->
+<div class="slot-bar">
+  <span class="slot-bar-event" id="slot-event">読み込み中...</span>
+  <span class="slot-bar-time" id="slot-time"></span>
+  <div class="slot-bar-tasks" id="slot-tasks"></div>
+</div>
+
+<!-- メインコンテンツ -->
+<div class="main">
+
+  <!-- 現在ポイント & リワード -->
+  <div class="reward-card">
+    <div class="card-title">🐾 現在ポイント & リワード</div>
+    <div class="current-pts-row">
+      <input class="current-pts-input" id="current-pts" type="text" placeholder="現在pt" oninput="onCurrentPtsInput()">
+      <span class="pts-label">pt</span>
+    </div>
+    <div class="reward-rows">
+      <div class="reward-row">
+        <span class="reward-row-label r1">R1</span>
+        <span class="reward-threshold" id="thresh-r1">—</span>
+        <div class="reward-bar-track"><div class="reward-bar-fill r1" id="bar-r1" style="width:0%"></div></div>
+        <span class="reward-remain r1" id="remain-r1">—</span>
+      </div>
+      <div class="reward-row">
+        <span class="reward-row-label r2">R2</span>
+        <span class="reward-threshold" id="thresh-r2">—</span>
+        <div class="reward-bar-track"><div class="reward-bar-fill r2" id="bar-r2" style="width:0%"></div></div>
+        <span class="reward-remain r2" id="remain-r2">—</span>
+      </div>
+      <div class="reward-row">
+        <span class="reward-row-label r3">R3</span>
+        <span class="reward-threshold" id="thresh-r3">—</span>
+        <div class="reward-bar-track"><div class="reward-bar-fill r3" id="bar-r3" style="width:0%"></div></div>
+        <span class="reward-remain r3" id="remain-r3">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加速逆算 -->
+  <div class="accel-card" id="accel-card">
+    <div class="card-title">🐾 加速逆算</div>
+    <div class="accel-rows" id="accel-rows">
+      <div class="no-accel">現在のスロットに加速タスクがありません</div>
+    </div>
+  </div>
+
+  <!-- 建築スロット -->
+  <div class="slots-card">
+    <div class="card-title">🐾 建築スロット（チェックで合計に加算）</div>
+    <div class="slots-grid" id="slots-grid"></div>
+  </div>
+
+  <!-- 合計ポイント -->
+  <div class="total-card">
+    <div class="card-title">🐾 選択スロット合計CAポイント</div>
+    <div class="total-row">
+      <span class="total-label">合計</span>
+      <span class="total-num" id="total-num">0</span>
+      <span class="total-pts-unit">pt</span>
+    </div>
+    <div class="total-note" id="total-note">スロットにチェックを入れると加算されます</div>
+  </div>
+
+</div>
+
+<div class="version-label">Mar 16 '26 🐾 v1.0</div>
+
+<script>
+// ============================================================
+// 定数・状態
+// ============================================================
+const DB_PATH = 'ca_database.json';
+const ACCEL_KEYWORDS = [
+  '加速アイテム時間が1分毎に'
+];
+const BP_TASK_KEYWORDS = [
+  '建築戦闘力+1',
+  '進化戦闘力+1'
+];
+
+let db = null;
+let currentSlot = null;
+let currentPage = 0; // 0=メイン, 1=サブ
+let countdownInterval = null;
+
+// ============================================================
+// 数値フォーマット
+// ============================================================
+function fmtNum(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(2).replace(/\.?0+$/, '') + 'M';
+  if (n >= 1000)    return (n / 1000).toFixed(1).replace(/\.?0+$/, '') + 'K';
+  return n.toLocaleString();
+}
+
+function parsePts(str) {
+  if (!str) return 0;
+  const s = str.replace(/,/g, '').trim();
+  if (/^[\d.]+M$/i.test(s)) return Math.round(parseFloat(s) * 1000000);
+  if (/^[\d.]+K$/i.test(s)) return Math.round(parseFloat(s) * 1000);
+  return parseInt(s) || 0;
+}
+
+function parseBP(str) {
+  if (!str) return 0;
+  const s = str.replace(/,/g, '').trim();
+  if (/^[\d.]+M$/i.test(s)) return parseFloat(s) * 1000000;
+  if (/^[\d.]+K$/i.test(s)) return parseFloat(s) * 1000;
+  return parseFloat(s) || 0;
+}
+
+// ============================================================
+// ゲーム内時刻（JST 9:00 = ゲーム内 0:00）
+// ============================================================
+function getGameTime() {
+  const now = new Date();
+  const jstH = now.getHours();
+  const jstM = now.getMinutes();
+  const jstS = now.getSeconds();
+  const totalMin = jstH * 60 + jstM;
+  const gameMin = ((totalMin - 9 * 60) + 24 * 60) % (24 * 60);
+  const gameH = Math.floor(gameMin / 60);
+  const gameM = gameMin % 60;
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  let d = now.getDay();
+  if (totalMin < 9 * 60) d = (d - 1 + 7) % 7;
+  return { h: gameH, m: gameM, s: jstS, dayIdx: d, dayLabel: days[d] + '曜日' };
+}
+
+function getJSTStr() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  return h + ':' + m;
+}
+
+const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+function getCurrentSlot() {
+  if (!db) return null;
+  const gt = getGameTime();
+  const dayKey = DAY_KEYS[gt.dayIdx];
+  const dayData = db.schedule[dayKey];
+  if (!dayData) return null;
+  const currentHour = gt.h;
+  for (const slot of dayData.slots) {
+    for (const t of slot.times) {
+      const slotH = parseInt(t.split(':')[0]);
+      if (slotH === currentHour) return { slot, dayKey, gt };
+    }
+  }
+  // 最初のスロットにフォールバック
+  return { slot: dayData.slots[0], dayKey, gt };
+}
+
+function getSlotTimeRange(slot) {
+  const t = slot.times[0];
+  const h = parseInt(t.split(':')[0]);
+  const next = (h + 1) % 24;
+  return t + '〜' + String(next).padStart(2, '0') + ':00';
+}
+
+// ============================================================
+// クロック更新
+// ============================================================
+function updateClock() {
+  const gt = getGameTime();
+  document.getElementById('clock-time').textContent = getJSTStr();
+  document.getElementById('clock-day').textContent = gt.dayLabel + '（ゲーム内）';
+}
+
+// ============================================================
+// スロット情報バー更新
+// ============================================================
+function updateSlotBar() {
+  const info = getCurrentSlot();
+  if (!info) return;
+  currentSlot = info.slot;
+
+  document.getElementById('slot-event').textContent = currentSlot.event;
+  document.getElementById('slot-time').textContent = getSlotTimeRange(currentSlot);
+
+  const tasksEl = document.getElementById('slot-tasks');
+  tasksEl.innerHTML = '';
+  for (const task of currentSlot.tasks) {
+    const chip = document.createElement('div');
+    chip.className = 'slot-task-chip';
+    chip.innerHTML = `<span>${task.label}</span><span class="chip-pts">${fmtNum(task.points)}pt</span>`;
+    tasksEl.appendChild(chip);
+  }
+
+  updateRewardThresholds();
+  updateAccelSection();
+  calcAll();
+}
+
+// ============================================================
+// リワード閾値表示
+// ============================================================
+function updateRewardThresholds() {
+  if (!db || !currentSlot) return;
+  const type = currentSlot.reward_type || 'standard';
+  const th = db.reward_thresholds.types[type];
+  if (!th) return;
+
+  document.getElementById('thresh-r1').textContent = fmtNum(th.reward1);
+  document.getElementById('thresh-r2').textContent = fmtNum(th.reward2);
+  document.getElementById('thresh-r3').textContent = fmtNum(th.reward3);
+}
+
+function getThresholds() {
+  if (!db || !currentSlot) return { r1: 100000, r2: 800000, r3: 5200000 };
+  const type = currentSlot.reward_type || 'standard';
+  const th = db.reward_thresholds.types[type];
+  if (!th) return { r1: 100000, r2: 800000, r3: 5200000 };
+  return { r1: th.reward1, r2: th.reward2, r3: th.reward3 };
+}
+
+// ============================================================
+// 加速逆算セクション
+// ============================================================
+function isAccelTask(label) {
+  return ACCEL_KEYWORDS.some(kw => label.includes(kw));
+}
+
+function updateAccelSection() {
+  if (!currentSlot) return;
+  const accelTasks = currentSlot.tasks.filter(t => isAccelTask(t.label));
+  const container = document.getElementById('accel-rows');
+  container.innerHTML = '';
+
+  if (accelTasks.length === 0) {
+    container.innerHTML = '<div class="no-accel">現在のスロットに加速タスクがありません</div>';
+    return;
+  }
+
+  for (let i = 0; i < accelTasks.length; i++) {
+    const task = accelTasks[i];
+    const row = document.createElement('div');
+    row.className = 'accel-row';
+    row.innerHTML = `
+      <span class="accel-task-label">${task.label}</span>
+      <span class="accel-pts-label">${task.points}pt/分</span>
+      <select class="accel-target-select" id="accel-target-${i}" onchange="calcAll()">
+        <option value="r1">R1</option>
+        <option value="r2">R2</option>
+        <option value="r3" selected>R3</option>
+      </select>
+      <div class="accel-result-wrap">
+        <span class="accel-result" id="accel-result-${i}">—</span>
+        <span class="accel-result-unit">分</span>
+      </div>
+    `;
+    container.appendChild(row);
+  }
+}
+
+// ============================================================
+// 建築スロット生成
+// ============================================================
+function buildSlots() {
+  const grid = document.getElementById('slots-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const card = document.createElement('div');
+    card.className = 'slot-card';
+    card.id = `slot-card-${i}`;
+    card.innerHTML = `
+      <div class="slot-header">
+        <input type="checkbox" class="slot-checkbox" id="slot-check-${i}" onchange="onSlotChange(${i})">
+        <span class="slot-label">建築${i + 1}</span>
+        <span class="slot-ca-pts empty" id="slot-ca-${i}">— pt</span>
+      </div>
+      <div class="slot-fields">
+        <div class="field-row">
+          <span class="field-label">現在BP</span>
+          <input class="field-input" id="slot-bp-cur-${i}" type="text" placeholder="例 4.20M" oninput="onSlotInput(${i})">
+        </div>
+        <div class="field-row">
+          <span class="field-label">完成後BP</span>
+          <input class="field-input" id="slot-bp-new-${i}" type="text" placeholder="例 4.38M" oninput="onSlotInput(${i})">
+        </div>
+        <div class="field-row">
+          <span class="field-label">+BP</span>
+          <span class="field-result empty" id="slot-bp-diff-${i}">—</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">完成時刻</span>
+          <input class="field-input" id="slot-time-${i}" type="time" oninput="onSlotTimeInput(${i})" style="color-scheme:dark;">
+        </div>
+      </div>
+      <div class="slot-countdown empty" id="slot-cd-${i}">—</div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+// ============================================================
+// ストレージキー
+// ============================================================
+function storageKey(idx) {
+  return `kuro_mig_p${currentPage}_slot${idx}`;
+}
+function storageKeyPts() {
+  return `kuro_mig_p${currentPage}_current_pts`;
+}
+
+// ============================================================
+// ストレージ保存・読み込み
+// ============================================================
+function saveSlot(idx) {
+  const data = {
+    bpCur: document.getElementById(`slot-bp-cur-${idx}`).value,
+    bpNew: document.getElementById(`slot-bp-new-${idx}`).value,
+    time:  document.getElementById(`slot-time-${idx}`).value,
+    checked: document.getElementById(`slot-check-${idx}`).checked
+  };
+  try { localStorage.setItem(storageKey(idx), JSON.stringify(data)); } catch(e) {}
+}
+
+function loadSlot(idx) {
+  try {
+    const raw = localStorage.getItem(storageKey(idx));
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    document.getElementById(`slot-bp-cur-${idx}`).value = data.bpCur || '';
+    document.getElementById(`slot-bp-new-${idx}`).value = data.bpNew || '';
+    document.getElementById(`slot-time-${idx}`).value  = data.time  || '';
+    document.getElementById(`slot-check-${idx}`).checked = !!data.checked;
+    updateSlotCalc(idx);
+  } catch(e) {}
+}
+
+function saveCurrentPts() {
+  try { localStorage.setItem(storageKeyPts(), document.getElementById('current-pts').value); } catch(e) {}
+}
+
+function loadCurrentPts() {
+  try {
+    const v = localStorage.getItem(storageKeyPts());
+    if (v !== null) document.getElementById('current-pts').value = v;
+  } catch(e) {}
+}
+
+// ============================================================
+// スロット計算
+// ============================================================
+function getBpTaskPts() {
+  if (!currentSlot) return 0;
+  const task = currentSlot.tasks.find(t => t.label === '建築戦闘力+1');
+  return task ? task.points : 0;
+}
+
+function updateSlotCalc(idx) {
+  const curStr = document.getElementById(`slot-bp-cur-${idx}`).value;
+  const newStr = document.getElementById(`slot-bp-new-${idx}`).value;
+  const cur = parseBP(curStr);
+  const nw  = parseBP(newStr);
+  const diffEl  = document.getElementById(`slot-bp-diff-${idx}`);
+  const caEl    = document.getElementById(`slot-ca-${idx}`);
+  const cardEl  = document.getElementById(`slot-card-${idx}`);
+  const checked = document.getElementById(`slot-check-${idx}`).checked;
+
+  if (cur > 0 && nw > 0 && nw > cur) {
+    const diff = Math.round(nw - cur);
+    diffEl.textContent = fmtNum(diff);
+    diffEl.classList.remove('empty');
+
+    const ptPerBp = getBpTaskPts();
+    if (ptPerBp > 0) {
+      const ca = diff * ptPerBp;
+      caEl.textContent = fmtNum(ca) + ' pt';
+      caEl.classList.remove('empty');
+    } else {
+      caEl.textContent = '— pt';
+      caEl.classList.add('empty');
+    }
+  } else {
+    diffEl.textContent = '—';
+    diffEl.classList.add('empty');
+    caEl.textContent = '— pt';
+    caEl.classList.add('empty');
+  }
+
+  cardEl.classList.toggle('checked', checked);
+}
+
+function updateSlotCountdown(idx) {
+  const timeVal = document.getElementById(`slot-time-${idx}`).value;
+  const cdEl = document.getElementById(`slot-cd-${idx}`);
+  if (!timeVal) {
+    cdEl.textContent = '';
+    cdEl.className = 'slot-countdown empty';
+    return;
+  }
+  const now = new Date();
+  const [h, m] = timeVal.split(':').map(Number);
+  let target = new Date(now);
+  target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+  const diff = Math.max(0, Math.floor((target - now) / 1000));
+  if (diff === 0) {
+    cdEl.textContent = '完成';
+    cdEl.className = 'slot-countdown done';
+    return;
+  }
+  const hh = Math.floor(diff / 3600);
+  const mm = Math.floor((diff % 3600) / 60);
+  const ss = diff % 60;
+  cdEl.textContent = `残 ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  cdEl.className = 'slot-countdown';
+}
+
+// ============================================================
+// 全体計算
+// ============================================================
+function calcAll() {
+  const pts = parsePts(document.getElementById('current-pts').value);
+  const th = getThresholds();
+
+  // リワード残り
+  ['r1', 'r2', 'r3'].forEach(key => {
+    const thVal = th[key];
+    const remain = Math.max(0, thVal - pts);
+    const pct = Math.min(100, thVal > 0 ? pts / thVal * 100 : 0);
+    const remainEl = document.getElementById('remain-' + key);
+    document.getElementById('bar-' + key).style.width = pct + '%';
+    if (remain === 0) {
+      remainEl.textContent = '達成';
+      remainEl.className = 'reward-remain achieved';
+    } else {
+      remainEl.textContent = fmtNum(remain) + ' pt';
+      remainEl.className = 'reward-remain ' + key;
+    }
+  });
+
+  // 加速逆算
+  if (currentSlot) {
+    const accelTasks = currentSlot.tasks.filter(t => isAccelTask(t.label));
+    for (let i = 0; i < accelTasks.length; i++) {
+      const selEl = document.getElementById(`accel-target-${i}`);
+      const resEl = document.getElementById(`accel-result-${i}`);
+      if (!selEl || !resEl) continue;
+      const target = selEl.value;
+      const remain = Math.max(0, th[target] - pts);
+      if (remain === 0) {
+        resEl.textContent = '達成済';
+        resEl.className = 'accel-result achieved';
+      } else {
+        const mins = Math.ceil(remain / accelTasks[i].points);
+        resEl.textContent = fmtNum(mins);
+        resEl.className = 'accel-result';
+      }
+    }
+  }
+
+  // 建築スロット合計
+  let total = 0;
+  let checkedCount = 0;
+  for (let i = 0; i < 8; i++) {
+    if (!document.getElementById(`slot-check-${i}`).checked) continue;
+    const curStr = document.getElementById(`slot-bp-cur-${i}`).value;
+    const newStr = document.getElementById(`slot-bp-new-${i}`).value;
+    const cur = parseBP(curStr);
+    const nw  = parseBP(newStr);
+    if (cur > 0 && nw > cur) {
+      const ptPerBp = getBpTaskPts();
+      if (ptPerBp > 0) {
+        total += Math.round(nw - cur) * ptPerBp;
+        checkedCount++;
+      }
+    }
+  }
+  document.getElementById('total-num').textContent = fmtNum(total);
+  document.getElementById('total-note').textContent =
+    checkedCount > 0
+      ? `${checkedCount}スロット選択中 ／ 現在pt(${fmtNum(pts)}) + 建築(${fmtNum(total)}) = ${fmtNum(pts + total)} pt`
+      : 'スロットにチェックを入れると加算されます';
+}
+
+// ============================================================
+// イベントハンドラ
+// ============================================================
+function onCurrentPtsInput() {
+  saveCurrentPts();
+  calcAll();
+}
+
+function onSlotInput(idx) {
+  updateSlotCalc(idx);
+  saveSlot(idx);
+  calcAll();
+}
+
+function onSlotTimeInput(idx) {
+  saveSlot(idx);
+}
+
+function onSlotChange(idx) {
+  updateSlotCalc(idx);
+  saveSlot(idx);
+  calcAll();
+}
+
+// ============================================================
+// ページ切り替え
+// ============================================================
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page-tab').forEach((el, i) => {
+    el.classList.toggle('active', i === page);
+  });
+  loadAllSlots();
+  loadCurrentPts();
+  calcAll();
+}
+
+function loadAllSlots() {
+  for (let i = 0; i < 8; i++) loadSlot(i);
+}
+
+// ============================================================
+// DBロード & 初期化
+// ============================================================
+async function init() {
+  try {
+    const res = await fetch(DB_PATH);
+    db = await res.json();
+  } catch(e) {
+    document.getElementById('slot-event').textContent = 'DBロード失敗（ca_database.jsonを同フォルダに置いてください）';
+  }
+
+  buildSlots();
+  loadAllSlots();
+  loadCurrentPts();
+  updateClock();
+  updateSlotBar();
+
+  // 1秒ごとに時計とカウントダウン更新
+  setInterval(() => {
+    updateClock();
+    for (let i = 0; i < 8; i++) updateSlotCountdown(i);
+  }, 1000);
+
+  // 1分ごとにスロット情報を再確認
+  setInterval(() => {
+    const prev = currentSlot;
+    updateSlotBar();
+    // スロットが切り替わったら再計算
+    if (currentSlot !== prev) calcAll();
+  }, 60000);
+
+  calcAll();
+}
+
+init();
+</script>
+</body>
+</html>

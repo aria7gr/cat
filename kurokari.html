@@ -3,6 +3,7 @@
   kurokari.html
   Colony Action Tool - Building Slots (仮)
   Mar 16 '26 🐾 v1.0  初回リリース：メイン7スロット・サブ4スロット・PC3列・スマホ1列
+  Mar 16 '26 🐾 v1.1  残り時間入力（日・時・分）に変更・完成予想時刻を表示
 -->
 <html lang="ja">
 <head>
@@ -322,7 +323,7 @@ body {
   <div class="col" id="col-2"></div>
 </div>
 
-<div class="version-label">Mar 16 '26 🐾 v1.0</div>
+<div class="version-label">Mar 16 '26 🐾 v1.1</div>
 
 <script>
 // ============================================================
@@ -405,36 +406,60 @@ function updateClock() {
 // カウントダウン
 // ============================================================
 function updateCountdown(key) {
-  const timeVal = document.getElementById(`${key}-time`).value;
   const daysVal = parseInt(document.getElementById(`${key}-days`).value) || 0;
+  const hourVal = parseInt(document.getElementById(`${key}-hour`).value) || 0;
+  const minVal  = parseInt(document.getElementById(`${key}-min`).value)  || 0;
   const cdEl = document.getElementById(`${key}-cd`);
-  if (!timeVal) {
+
+  const totalSecs = (daysVal * 86400) + (hourVal * 3600) + (minVal * 60);
+  if (totalSecs <= 0) {
     cdEl.textContent = '';
     cdEl.className = 'slot-countdown empty';
     return;
   }
-  const now = new Date();
-  const [h, m] = timeVal.split(':').map(Number);
-  let target = new Date(now);
-  target.setHours(h, m, 0, 0);
-  if (daysVal > 0) {
-    target.setDate(target.getDate() + daysVal);
-  } else if (target <= now) {
-    target.setDate(target.getDate() + 1);
+
+  // 起点時刻の管理
+  const startKey = `kurokari_${key}_start`;
+  let startTime;
+  try {
+    const stored = localStorage.getItem(startKey);
+    const savedData = JSON.parse(localStorage.getItem(storageKey(key)) || '{}');
+    const savedTotal = (parseInt(savedData.days||0)*86400) + (parseInt(savedData.hour||0)*3600) + (parseInt(savedData.min||0)*60);
+    if (stored && savedTotal === totalSecs) {
+      startTime = parseInt(stored);
+    } else {
+      startTime = Date.now();
+      localStorage.setItem(startKey, startTime);
+    }
+  } catch(e) {
+    startTime = Date.now();
   }
-  const diff = Math.max(0, Math.floor((target - now) / 1000));
-  if (diff === 0) {
+
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const remaining = Math.max(0, totalSecs - elapsed);
+
+  if (remaining === 0) {
     cdEl.textContent = '完成';
     cdEl.className = 'slot-countdown done';
     return;
   }
-  const dd = Math.floor(diff / 86400);
-  const hh = Math.floor((diff % 86400) / 3600);
-  const mm = Math.floor((diff % 3600) / 60);
-  const ss = diff % 60;
+
+  const dd = Math.floor(remaining / 86400);
+  const hh = Math.floor((remaining % 86400) / 3600);
+  const mm = Math.floor((remaining % 3600) / 60);
+  const ss = remaining % 60;
   let text = '残 ';
   if (dd > 0) text += `${dd}日 `;
   text += `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+
+  // 完成予想時刻
+  const finishTime = new Date(startTime + totalSecs * 1000);
+  const mo = finishTime.getMonth() + 1;
+  const d  = finishTime.getDate();
+  const fh = String(finishTime.getHours()).padStart(2,'0');
+  const fm = String(finishTime.getMinutes()).padStart(2,'0');
+  text += `　完成：${mo}/${d} ${fh}:${fm}`;
+
   cdEl.textContent = text;
   cdEl.className = 'slot-countdown';
 }
@@ -512,7 +537,8 @@ function saveSlot(key) {
     newNum:  document.getElementById(`${key}-new-num`).value,
     newUnit: document.getElementById(`${key}-new-unit`).textContent,
     days:    document.getElementById(`${key}-days`).value,
-    time:    document.getElementById(`${key}-time`).value,
+    hour:    document.getElementById(`${key}-hour`).value,
+    min:     document.getElementById(`${key}-min`).value,
     memo:    document.getElementById(`${key}-memo`).value,
   };
   try { localStorage.setItem(storageKey(key), JSON.stringify(data)); } catch(e) {}
@@ -526,7 +552,8 @@ function loadSlot(key) {
     document.getElementById(`${key}-cur-num`).value  = data.curNum  || '';
     document.getElementById(`${key}-new-num`).value  = data.newNum  || '';
     document.getElementById(`${key}-days`).value     = data.days    || '';
-    document.getElementById(`${key}-time`).value     = data.time    || '';
+    document.getElementById(`${key}-hour`).value     = data.hour    || '';
+    document.getElementById(`${key}-min`).value      = data.min     || '';
     document.getElementById(`${key}-memo`).value     = data.memo    || '';
     if (data.curUnit) setUnitBtn(key, 'cur', data.curUnit);
     if (data.newUnit) setUnitBtn(key, 'new', data.newUnit);
@@ -582,10 +609,13 @@ function buildSlot(key, label) {
           </div>
         </div>
         <div class="field-row">
-          <span class="field-label">完成まで</span>
-          <input class="days-input" id="${key}-days" type="number" min="0" step="1" placeholder="日" oninput="onTimeInput('${key}')">
+          <span class="field-label">残り時間</span>
+          <input class="days-input" id="${key}-days" type="number" min="0" step="1" placeholder="0" oninput="onTimeInput('${key}')">
           <span class="unit-label">日</span>
-          <input class="field-input" id="${key}-time" type="time" oninput="onTimeInput('${key}')" style="color-scheme:dark;">
+          <input class="days-input" id="${key}-hour" type="number" min="0" max="23" step="1" placeholder="0" oninput="onTimeInput('${key}')">
+          <span class="unit-label">時</span>
+          <input class="days-input" id="${key}-min" type="number" min="0" max="59" step="1" placeholder="0" oninput="onTimeInput('${key}')">
+          <span class="unit-label">分</span>
         </div>
       </div>
       <div class="slot-countdown empty" id="${key}-cd">—</div>

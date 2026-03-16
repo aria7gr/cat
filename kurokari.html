@@ -3,7 +3,8 @@
   kurokari.html
   Colony Action Tool - Building Slots (仮)
   Mar 16 '26 🐾 v1.0  初回リリース：メイン7スロット・サブ4スロット・PC3列・スマホ1列
-  Mar 16 '26 🐾 v1.1  残り時間入力（日・時・分）に変更・完成予想時刻を表示
+  Mar 16 '26 🐾 v1.1  残り時間入力（日・時・分）に変更・完成予想時刻を表示・ズーム防止
+  Mar 16 '26 🐾 v1.2  dd:hh:mmクイック入力・スロットリセット・メモリセット追加
 -->
 <html lang="ja">
 <head>
@@ -272,9 +273,53 @@ body {
 .slot-memo:focus { border-color: var(--accent); }
 .slot-memo::placeholder { color: var(--text-dim); opacity: 0.45; }
 
-/* ============================================================
-   バージョン
-   ============================================================ */
+/* リセットボタン */
+.slot-btn-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+.reset-btn {
+  flex: 1;
+  padding: 4px 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.reset-btn:hover { border-color: var(--r3-color); color: var(--r3-color); }
+.reset-btn.memo:hover { border-color: var(--accent); color: var(--accent); }
+
+/* クイック入力 */
+.quick-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.quick-input {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 7px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.quick-input:focus { border-color: var(--accent); }
+.quick-input::placeholder { color: var(--text-dim); opacity: 0.45; font-size: 13px; }
+.quick-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
 .version-label {
   position: fixed;
   bottom: 8px;
@@ -323,7 +368,7 @@ body {
   <div class="col" id="col-2"></div>
 </div>
 
-<div class="version-label">Mar 16 '26 🐾 v1.1</div>
+<div class="version-label">Mar 16 '26 🐾 v1.2</div>
 
 <script>
 // ============================================================
@@ -539,6 +584,7 @@ function saveSlot(key) {
     days:    document.getElementById(`${key}-days`).value,
     hour:    document.getElementById(`${key}-hour`).value,
     min:     document.getElementById(`${key}-min`).value,
+    quick:   document.getElementById(`${key}-quick`).value,
     memo:    document.getElementById(`${key}-memo`).value,
   };
   try { localStorage.setItem(storageKey(key), JSON.stringify(data)); } catch(e) {}
@@ -554,6 +600,7 @@ function loadSlot(key) {
     document.getElementById(`${key}-days`).value     = data.days    || '';
     document.getElementById(`${key}-hour`).value     = data.hour    || '';
     document.getElementById(`${key}-min`).value      = data.min     || '';
+    document.getElementById(`${key}-quick`).value    = data.quick   || '';
     document.getElementById(`${key}-memo`).value     = data.memo    || '';
     if (data.curUnit) setUnitBtn(key, 'cur', data.curUnit);
     if (data.newUnit) setUnitBtn(key, 'new', data.newUnit);
@@ -574,6 +621,41 @@ function onTimeInput(key) {
 }
 
 function onMemoInput(key) {
+  saveSlot(key);
+}
+
+function onQuickTimeInput(key) {
+  const val = document.getElementById(`${key}-quick`).value.trim();
+  const parts = val.split(':');
+  if (parts.length === 3) {
+    const d = parseInt(parts[0]) || 0;
+    const h = parseInt(parts[1]) || 0;
+    const m = parseInt(parts[2]) || 0;
+    document.getElementById(`${key}-days`).value = d;
+    document.getElementById(`${key}-hour`).value = h;
+    document.getElementById(`${key}-min`).value  = m;
+    // 起点リセット
+    try { localStorage.removeItem(`kurokari_${key}_start`); } catch(e) {}
+    saveSlot(key);
+  }
+}
+
+function resetSlot(key) {
+  document.getElementById(`${key}-cur-num`).value = '';
+  document.getElementById(`${key}-new-num`).value = '';
+  document.getElementById(`${key}-quick`).value   = '';
+  document.getElementById(`${key}-days`).value    = '';
+  document.getElementById(`${key}-hour`).value    = '';
+  document.getElementById(`${key}-min`).value     = '';
+  setUnitBtn(key, 'cur', 'K');
+  setUnitBtn(key, 'new', 'K');
+  try { localStorage.removeItem(`kurokari_${key}_start`); } catch(e) {}
+  updateSlotCalc(key);
+  saveSlot(key);
+}
+
+function resetMemo(key) {
+  document.getElementById(`${key}-memo`).value = '';
   saveSlot(key);
 }
 
@@ -608,8 +690,12 @@ function buildSlot(key, label) {
             <button class="copy-btn" onclick="copyValue('${key}','diff',this)">コピー</button>
           </div>
         </div>
+        <div class="quick-input-row">
+          <span class="quick-label">残り時間</span>
+          <input class="quick-input" id="${key}-quick" type="text" placeholder="dd:hh:mm" oninput="onQuickTimeInput('${key}')">
+        </div>
         <div class="field-row">
-          <span class="field-label">残り時間</span>
+          <span class="field-label"></span>
           <input class="days-input" id="${key}-days" type="number" min="0" step="1" placeholder="0" oninput="onTimeInput('${key}')">
           <span class="unit-label">日</span>
           <input class="days-input" id="${key}-hour" type="number" min="0" max="23" step="1" placeholder="0" oninput="onTimeInput('${key}')">
@@ -620,6 +706,10 @@ function buildSlot(key, label) {
       </div>
       <div class="slot-countdown empty" id="${key}-cd">—</div>
       <textarea class="slot-memo" id="${key}-memo" rows="2" placeholder="メモ（建物名・次の建設予定など）" oninput="onMemoInput('${key}')"></textarea>
+      <div class="slot-btn-row">
+        <button class="reset-btn" onclick="resetSlot('${key}')">スロットリセット</button>
+        <button class="reset-btn memo" onclick="resetMemo('${key}')">メモリセット</button>
+      </div>
     </div>
   `;
 }

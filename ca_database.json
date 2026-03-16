@@ -9,7 +9,7 @@
       "https://lilygamelife.com/the-ants-event-calendar/",
       "https://manimany.net/157"
     ],
-    "version": "260315"
+    "version": "260316"
   },
   "reward_thresholds": {
     "note": "女王Lv25のリワード必要ポイント。時間帯によって異なる。",
@@ -40,8 +40,8 @@
       },
       "low": {
         "label": "低難度",
-        "reward1": 50000,
-        "reward2": 400000,
+        "reward1": 80000,
+        "reward2": 640000,
         "reward3": 4240000
       }
     }

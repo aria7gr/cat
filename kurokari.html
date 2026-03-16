@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<!--
+  kurokari.html
+  Colony Action Tool - Building Slots (仮)
+  Mar 16 '26 🐾 v1.0  初回リリース：メイン7スロット・サブ4スロット・PC3列・スマホ1列
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAT [building slots]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #111113;
+  --surface:   #1a1a1f;
+  --surface2:  #242428;
+  --surface3:  #2e2e34;
+  --border:    #3a3a44;
+  --text:      #e8e4f0;
+  --text-dim:  #8a8a9a;
+  --text-bright: #ffffff;
+  --accent:    #c8b8e8;
+  --green:     #a0d0c0;
+  --r3-color:  #e89878;
+  --main-color: #a0c8d0;
+  --sub-color:  #c8a0d0;
+  --font-main: 'Noto Sans JP', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+  --sz-sm:  12px;
+  --sz-base: 15px;
+  --sz-lg:  17px;
+  --sz-xl:  22px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-main);
+  font-size: var(--sz-base);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ============================================================
+   ヘッダー
+   ============================================================ */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-icon { font-size: 20px; line-height: 1; }
+.header-title { font-size: var(--sz-sm); color: var(--text-dim); letter-spacing: 0.08em; }
+.header-name { font-size: var(--sz-lg); font-weight: 700; color: var(--text-bright); }
+.header-clock { margin-left: auto; text-align: right; }
+.clock-time { font-family: var(--font-mono); font-size: var(--sz-xl); color: var(--text-bright); }
+.clock-day  { font-size: var(--sz-sm); color: var(--accent); }
+
+/* ============================================================
+   3列レイアウト
+   ============================================================ */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  min-height: calc(100vh - 56px);
+}
+
+.col {
+  padding: 14px 12px 60px;
+  border-right: 1px solid var(--border);
+}
+.col:last-child { border-right: none; }
+
+.col-title {
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.col-title.main { color: var(--main-color); }
+.col-title.sub  { color: var(--sub-color); }
+
+/* ============================================================
+   スロットカード
+   ============================================================ */
+.slot-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 11px;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.slot-card:hover { border-color: var(--accent); }
+
+.slot-label {
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.slot-fields { display: flex; flex-direction: column; gap: 5px; }
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.field-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 52px;
+  flex-shrink: 0;
+}
+
+/* BP入力（数値+K/Mトグル） */
+.bp-input-wrap {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+.bp-num-input {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+.bp-num-input:focus { border-color: var(--accent); }
+.bp-num-input::placeholder { color: var(--text-dim); opacity: 0.45; }
+
+.bp-unit-btn {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 0 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.bp-unit-btn.active-k { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
+.bp-unit-btn.active-m { background: var(--surface2); color: var(--r3-color); border-color: var(--r3-color); }
+
+/* コピーボタン付き結果行 */
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.field-result {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--green);
+  padding: 4px 6px;
+  background: var(--bg);
+  border-radius: 4px;
+  min-width: 0;
+}
+.field-result.empty { color: var(--text-dim); opacity: 0.4; }
+
+.copy-btn {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-family: var(--font-main);
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+.copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+/* 通常input（時刻・日数） */
+.field-input {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-input::placeholder { color: var(--text-dim); opacity: 0.45; }
+
+.days-input {
+  width: 44px;
+  flex: none;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 5px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.days-input:focus { border-color: var(--accent); }
+
+.unit-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+/* カウントダウン */
+.slot-countdown {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--sz-sm);
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.04em;
+  min-height: 18px;
+}
+.slot-countdown.done  { color: var(--green); }
+.slot-countdown.empty { color: transparent; }
+
+/* メモ欄 */
+.slot-memo {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 7px;
+  color: var(--text);
+  font-family: var(--font-main);
+  font-size: 11px;
+  outline: none;
+  resize: none;
+  transition: border-color 0.15s;
+}
+.slot-memo:focus { border-color: var(--accent); }
+.slot-memo::placeholder { color: var(--text-dim); opacity: 0.45; }
+
+/* ============================================================
+   バージョン
+   ============================================================ */
+.version-label {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  opacity: 0.5;
+  pointer-events: none;
+  font-family: var(--font-main);
+}
+
+/* ============================================================
+   スマホ：1列
+   ============================================================ */
+@media (max-width: 700px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  .col { border-right: none; border-bottom: 1px solid var(--border); }
+  .col:last-child { border-bottom: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <span class="header-icon">🐾</span>
+  <div>
+    <div class="header-title">Colony Action Tool</div>
+    <div class="header-name">[building slots]</div>
+  </div>
+  <div class="header-clock">
+    <div class="clock-time" id="clock-time">--:--</div>
+    <div class="clock-day" id="clock-day">--</div>
+  </div>
+</div>
+
+<!-- 3列グリッド -->
+<div class="main-grid">
+  <!-- 列1：メイン1〜4 -->
+  <div class="col" id="col-0"></div>
+  <!-- 列2：メイン5〜7 -->
+  <div class="col" id="col-1"></div>
+  <!-- 列3：サブ1〜4 -->
+  <div class="col" id="col-2"></div>
+</div>
+
+<div class="version-label">Mar 16 '26 🐾 v1.0</div>
+
+<script>
+// ============================================================
+// スロット定義
+// ============================================================
+const COLUMNS = [
+  {
+    id: 'col-0',
+    title: 'メイン 1〜4',
+    titleClass: 'main',
+    slots: [
+      { key: 'main1', label: 'メイン建築1' },
+      { key: 'main2', label: 'メイン建築2' },
+      { key: 'main3', label: 'メイン建築3' },
+      { key: 'main4', label: 'メイン建築4' },
+    ]
+  },
+  {
+    id: 'col-1',
+    title: 'メイン 5〜7',
+    titleClass: 'main',
+    slots: [
+      { key: 'main5', label: 'メイン建築5' },
+      { key: 'main6', label: 'メイン建築6' },
+      { key: 'main7', label: 'メイン建築7' },
+    ]
+  },
+  {
+    id: 'col-2',
+    title: 'サブ 1〜4',
+    titleClass: 'sub',
+    slots: [
+      { key: 'sub1', label: 'サブ建築1' },
+      { key: 'sub2', label: 'サブ建築2' },
+      { key: 'sub3', label: 'サブ建築3' },
+      { key: 'sub4', label: 'サブ建築4' },
+    ]
+  }
+];
+
+// ============================================================
+// 数値フォーマット
+// ============================================================
+function fmtNum(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(2).replace(/\.?0+$/, '') + 'M';
+  if (n >= 1000)    return (n / 1000).toFixed(1).replace(/\.?0+$/, '') + 'K';
+  return n.toLocaleString();
+}
+
+function getBpValue(key, field) {
+  const num  = parseFloat(document.getElementById(`${key}-${field}-num`).value);
+  const unit = document.getElementById(`${key}-${field}-unit`).textContent;
+  if (isNaN(num) || num <= 0) return 0;
+  return unit === 'M' ? num * 1000000 : num * 1000;
+}
+
+// ============================================================
+// クロック
+// ============================================================
+function getGameTime() {
+  const now = new Date();
+  const jstH = now.getHours();
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  let d = now.getDay();
+  if (jstH < 9) d = (d - 1 + 7) % 7;
+  return { dayLabel: days[d] + '曜日' };
+}
+
+function getJSTStr() {
+  const now = new Date();
+  return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+
+function updateClock() {
+  document.getElementById('clock-time').textContent = getJSTStr();
+  document.getElementById('clock-day').textContent = getGameTime().dayLabel + '（ゲーム内）';
+}
+
+// ============================================================
+// カウントダウン
+// ============================================================
+function updateCountdown(key) {
+  const timeVal = document.getElementById(`${key}-time`).value;
+  const daysVal = parseInt(document.getElementById(`${key}-days`).value) || 0;
+  const cdEl = document.getElementById(`${key}-cd`);
+  if (!timeVal) {
+    cdEl.textContent = '';
+    cdEl.className = 'slot-countdown empty';
+    return;
+  }
+  const now = new Date();
+  const [h, m] = timeVal.split(':').map(Number);
+  let target = new Date(now);
+  target.setHours(h, m, 0, 0);
+  if (daysVal > 0) {
+    target.setDate(target.getDate() + daysVal);
+  } else if (target <= now) {
+    target.setDate(target.getDate() + 1);
+  }
+  const diff = Math.max(0, Math.floor((target - now) / 1000));
+  if (diff === 0) {
+    cdEl.textContent = '完成';
+    cdEl.className = 'slot-countdown done';
+    return;
+  }
+  const dd = Math.floor(diff / 86400);
+  const hh = Math.floor((diff % 86400) / 3600);
+  const mm = Math.floor((diff % 3600) / 60);
+  const ss = diff % 60;
+  let text = '残 ';
+  if (dd > 0) text += `${dd}日 `;
+  text += `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  cdEl.textContent = text;
+  cdEl.className = 'slot-countdown';
+}
+
+// ============================================================
+// BP計算
+// ============================================================
+function updateSlotCalc(key) {
+  const cur = getBpValue(key, 'cur');
+  const nw  = getBpValue(key, 'new');
+  const diffEl = document.getElementById(`${key}-diff`);
+
+  if (cur > 0 && nw > cur) {
+    const diff = Math.round(nw - cur);
+    diffEl.textContent = '+' + fmtNum(diff);
+    diffEl.classList.remove('empty');
+  } else {
+    diffEl.textContent = '—';
+    diffEl.classList.add('empty');
+  }
+}
+
+// ============================================================
+// K/Mトグル
+// ============================================================
+function setUnitBtn(key, field, unit) {
+  const btn = document.getElementById(`${key}-${field}-unit`);
+  btn.textContent = unit;
+  btn.className = 'bp-unit-btn ' + (unit === 'M' ? 'active-m' : 'active-k');
+}
+
+function toggleUnit(key, field) {
+  const btn = document.getElementById(`${key}-${field}-unit`);
+  const newUnit = btn.textContent === 'K' ? 'M' : 'K';
+  setUnitBtn(key, field, newUnit);
+  const otherField = field === 'cur' ? 'new' : 'cur';
+  setUnitBtn(key, otherField, newUnit);
+  onSlotInput(key);
+}
+
+// ============================================================
+// コピー
+// ============================================================
+function copyValue(key, field, btnEl) {
+  let text = '';
+  if (field === 'diff') {
+    text = document.getElementById(`${key}-diff`).textContent;
+    if (text === '—') return;
+  } else {
+    const num  = document.getElementById(`${key}-${field}-num`).value;
+    const unit = document.getElementById(`${key}-${field}-unit`).textContent;
+    if (!num) return;
+    text = num + unit;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btnEl.textContent;
+    btnEl.textContent = '✓';
+    btnEl.classList.add('copied');
+    setTimeout(() => {
+      btnEl.textContent = orig;
+      btnEl.classList.remove('copied');
+    }, 1200);
+  }).catch(() => {});
+}
+
+// ============================================================
+// ストレージ
+// ============================================================
+function storageKey(key) { return `kurokari_${key}`; }
+
+function saveSlot(key) {
+  const data = {
+    curNum:  document.getElementById(`${key}-cur-num`).value,
+    curUnit: document.getElementById(`${key}-cur-unit`).textContent,
+    newNum:  document.getElementById(`${key}-new-num`).value,
+    newUnit: document.getElementById(`${key}-new-unit`).textContent,
+    days:    document.getElementById(`${key}-days`).value,
+    time:    document.getElementById(`${key}-time`).value,
+    memo:    document.getElementById(`${key}-memo`).value,
+  };
+  try { localStorage.setItem(storageKey(key), JSON.stringify(data)); } catch(e) {}
+}
+
+function loadSlot(key) {
+  try {
+    const raw = localStorage.getItem(storageKey(key));
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    document.getElementById(`${key}-cur-num`).value  = data.curNum  || '';
+    document.getElementById(`${key}-new-num`).value  = data.newNum  || '';
+    document.getElementById(`${key}-days`).value     = data.days    || '';
+    document.getElementById(`${key}-time`).value     = data.time    || '';
+    document.getElementById(`${key}-memo`).value     = data.memo    || '';
+    if (data.curUnit) setUnitBtn(key, 'cur', data.curUnit);
+    if (data.newUnit) setUnitBtn(key, 'new', data.newUnit);
+    updateSlotCalc(key);
+  } catch(e) {}
+}
+
+// ============================================================
+// イベントハンドラ
+// ============================================================
+function onSlotInput(key) {
+  updateSlotCalc(key);
+  saveSlot(key);
+}
+
+function onTimeInput(key) {
+  saveSlot(key);
+}
+
+function onMemoInput(key) {
+  saveSlot(key);
+}
+
+// ============================================================
+// スロットHTML生成
+// ============================================================
+function buildSlot(key, label) {
+  return `
+    <div class="slot-card">
+      <div class="slot-label">${label}</div>
+      <div class="slot-fields">
+        <div class="field-row">
+          <span class="field-label">現在BP</span>
+          <div class="bp-input-wrap">
+            <input class="bp-num-input" id="${key}-cur-num" type="number" min="0" step="any" placeholder="数値" oninput="onSlotInput('${key}')">
+            <button class="bp-unit-btn active-k" id="${key}-cur-unit" onclick="toggleUnit('${key}','cur')">K</button>
+          </div>
+          <button class="copy-btn" onclick="copyValue('${key}','cur',this)">コピー</button>
+        </div>
+        <div class="field-row">
+          <span class="field-label">完成後BP</span>
+          <div class="bp-input-wrap">
+            <input class="bp-num-input" id="${key}-new-num" type="number" min="0" step="any" placeholder="数値" oninput="onSlotInput('${key}')">
+            <button class="bp-unit-btn active-k" id="${key}-new-unit" onclick="toggleUnit('${key}','new')">K</button>
+          </div>
+          <button class="copy-btn" onclick="copyValue('${key}','new',this)">コピー</button>
+        </div>
+        <div class="field-row">
+          <span class="field-label">+BP</span>
+          <div class="result-row" style="flex:1;">
+            <span class="field-result empty" id="${key}-diff">—</span>
+            <button class="copy-btn" onclick="copyValue('${key}','diff',this)">コピー</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">完成まで</span>
+          <input class="days-input" id="${key}-days" type="number" min="0" step="1" placeholder="日" oninput="onTimeInput('${key}')">
+          <span class="unit-label">日</span>
+          <input class="field-input" id="${key}-time" type="time" oninput="onTimeInput('${key}')" style="color-scheme:dark;">
+        </div>
+      </div>
+      <div class="slot-countdown empty" id="${key}-cd">—</div>
+      <textarea class="slot-memo" id="${key}-memo" rows="2" placeholder="メモ（建物名・次の建設予定など）" oninput="onMemoInput('${key}')"></textarea>
+    </div>
+  `;
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+function init() {
+  // 列を生成
+  for (const col of COLUMNS) {
+    const el = document.getElementById(col.id);
+    el.innerHTML = `<div class="col-title ${col.titleClass}">🐾 ${col.title}</div>`;
+    for (const s of col.slots) {
+      el.innerHTML += buildSlot(s.key, s.label);
+    }
+  }
+
+  // データ読み込み
+  for (const col of COLUMNS) {
+    for (const s of col.slots) loadSlot(s.key);
+  }
+
+  // クロック
+  updateClock();
+  setInterval(() => {
+    updateClock();
+    for (const col of COLUMNS) {
+      for (const s of col.slots) updateCountdown(s.key);
+    }
+  }, 1000);
+}
+
+init();
+</script>
+</body>
+</html>

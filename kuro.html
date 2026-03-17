@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<!--
+  cat_s0.1.html
+  🐈‍⬛ Colony Action Tool [simulator] - クロ
+  Mar 17 '26 🐈‍⬛ v0.1  初回リリース：中央CA計算・左建築スロット・右進化+兵隊アリ・PC3列/スマホタブ・メイン/サブ切替
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CAT [simulator]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #111113;
+  --surface:   #1a1a1f;
+  --surface2:  #242428;
+  --surface3:  #2e2e34;
+  --border:    #3a3a44;
+  --text:      #e8e4f0;
+  --text-dim:  #8a8a9a;
+  --text-bright: #ffffff;
+  --accent:    #c8b8e8;
+  --green:     #a0d0c0;
+  --r1-color:  #80c898;
+  --r2-color:  #c8b8e8;
+  --r3-color:  #e89878;
+  --checked-border: rgba(200,184,232,0.7);
+  --checked-bg:     rgba(200,184,232,0.07);
+  --font-main: 'Noto Sans JP', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+  --sz-sm:  12px;
+  --sz-base: 15px;
+  --sz-lg:  17px;
+  --sz-xl:  22px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-main);
+  font-size: var(--sz-base);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ============================================================ ヘッダー */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.header-icon { font-size: 20px; line-height: 1; }
+.header-title { font-size: var(--sz-sm); color: var(--text-dim); letter-spacing: 0.08em; }
+.header-name { font-size: var(--sz-lg); font-weight: 700; color: var(--text-bright); }
+.header-clock { margin-left: auto; text-align: right; }
+.clock-time { font-family: var(--font-mono); font-size: var(--sz-xl); color: var(--text-bright); }
+.clock-day  { font-size: var(--sz-sm); color: var(--accent); }
+
+/* ============================================================ ページ切替タブ */
+.page-tabs {
+  display: flex;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  gap: 4px;
+}
+.page-tab {
+  padding: 8px 20px;
+  font-size: var(--sz-sm);
+  font-family: var(--font-main);
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.page-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.page-tab:hover:not(.active) { color: var(--text); }
+
+/* ============================================================ スロット情報バー */
+.slot-bar {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.slot-bar-event { font-size: var(--sz-base); font-weight: 700; color: var(--text-bright); }
+.slot-bar-time  { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--text-dim); }
+.slot-bar-tasks { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.slot-task-chip {
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 4px;
+  border: 1px solid var(--border); background: var(--surface3);
+  font-size: var(--sz-sm);
+}
+.slot-task-chip .chip-pts { font-family: var(--font-mono); color: var(--green); }
+
+/* ============================================================ PC 3列レイアウト */
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 220px;
+  min-height: calc(100vh - 120px);
+}
+.col-left, .col-right {
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 14px 12px 60px;
+}
+.col-left  { border-right: 1px solid var(--border); }
+.col-right { border-left:  1px solid var(--border); }
+.col-center {
+  overflow-y: auto;
+  padding: 16px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ============================================================ スマホタブバー */
+.mob-tabs {
+  display: none;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 56px;
+  z-index: 100;
+}
+.mob-tab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: var(--sz-sm);
+  font-family: var(--font-main);
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.mob-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ============================================================ 共通カードスタイル */
+.card-title {
+  font-size: var(--sz-sm);
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title {
+  font-size: var(--sz-sm);
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ============================================================ 現在ポイント & リワード */
+.reward-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.current-pts-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.current-pts-input {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  width: 140px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.current-pts-input:focus { border-color: var(--accent); }
+.current-pts-input::placeholder { color: var(--text-dim); opacity: 0.5; font-size: var(--sz-base); }
+.pts-unit-btn {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text-dim); font-family: var(--font-mono); font-size: var(--sz-base);
+  padding: 7px 12px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.pts-unit-btn.active-k { color: var(--accent); border-color: var(--accent); background: var(--surface2); }
+.pts-unit-btn.active-m { color: var(--r3-color); border-color: var(--r3-color); background: var(--surface2); }
+.pts-label { font-size: var(--sz-sm); color: var(--text-dim); }
+
+.reward-rows { display: flex; flex-direction: column; gap: 9px; }
+.reward-row  { display: flex; align-items: center; gap: 10px; }
+.reward-row-label { font-size: var(--sz-sm); font-weight: 700; width: 28px; flex-shrink: 0; }
+.reward-row-label.r1 { color: var(--r1-color); }
+.reward-row-label.r2 { color: var(--r2-color); }
+.reward-row-label.r3 { color: var(--r3-color); }
+.reward-threshold { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--text-dim); width: 52px; flex-shrink: 0; text-align: right; }
+.reward-bar-track { flex: 1; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.reward-bar-fill  { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+.reward-bar-fill.r1 { background: var(--r1-color); }
+.reward-bar-fill.r2 { background: var(--r2-color); }
+.reward-bar-fill.r3 { background: var(--r3-color); }
+.reward-remain { font-family: var(--font-mono); font-size: var(--sz-sm); width: 80px; text-align: right; flex-shrink: 0; }
+.reward-remain.r1 { color: var(--r1-color); }
+.reward-remain.r2 { color: var(--r2-color); }
+.reward-remain.r3 { color: var(--r3-color); }
+.reward-remain.achieved { color: var(--green); }
+
+/* ============================================================ 加速逆算 */
+.calc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.accel-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--surface2);
+  border-radius: 6px; border: 1px solid var(--border);
+  flex-wrap: wrap; margin-bottom: 6px;
+}
+.accel-task-label { font-size: var(--sz-sm); color: var(--text); flex: 1; min-width: 120px; }
+.accel-pts-label  { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--green); flex-shrink: 0; }
+.accel-target-select {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 8px; color: var(--text); font-family: var(--font-mono); font-size: var(--sz-sm);
+  outline: none; cursor: pointer; appearance: none; width: 52px; text-align: center;
+}
+.accel-result { font-family: var(--font-mono); font-size: var(--sz-lg); color: var(--green); font-weight: 500; }
+.accel-result.achieved { color: var(--r1-color); }
+.no-accel { font-size: var(--sz-sm); color: var(--text-dim); padding: 6px 4px; font-style: italic; }
+
+/* ============================================================ 孵化逆算 */
+.hatch-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--surface2);
+  border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;
+}
+.hatch-select, .hatch-target-select {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 8px; color: var(--text); font-family: var(--font-mono); font-size: var(--sz-sm);
+  outline: none; cursor: pointer; appearance: none;
+}
+.hatch-select { flex: 1; min-width: 140px; }
+.hatch-target-select { width: 52px; text-align: center; }
+.hatch-result { font-family: var(--font-mono); font-size: var(--sz-lg); color: var(--green); font-weight: 500; }
+.hatch-result.achieved { color: var(--r1-color); }
+.no-hatch { font-size: var(--sz-sm); color: var(--text-dim); padding: 6px 4px; font-style: italic; }
+
+/* ============================================================ スロットカード（共通） */
+.slot-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 11px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+.slot-card:hover { border-color: var(--accent); }
+.slot-card.checked { border-color: var(--checked-border); background: var(--checked-bg); }
+
+.slot-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.slot-checkbox { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.slot-label-text { font-size: var(--sz-sm); font-weight: 700; color: var(--text-dim); flex: 1; }
+.slot-ca-pts { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--green); }
+.slot-ca-pts.empty { color: var(--text-dim); opacity: 0.4; }
+
+.slot-fields { display: flex; flex-direction: column; gap: 5px; }
+.field-row { display: flex; align-items: center; gap: 5px; }
+.field-label { font-size: 11px; color: var(--text-dim); width: 52px; flex-shrink: 0; }
+.field-result { flex: 1; font-family: var(--font-mono); font-size: 13px; color: var(--green); padding: 4px 6px; background: var(--bg); border-radius: 4px; }
+.field-result.empty { color: var(--text-dim); opacity: 0.4; }
+
+.bp-input-wrap { flex: 1; display: flex; gap: 4px; min-width: 0; }
+.bp-num-input {
+  flex: 1; background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 6px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
+  outline: none; transition: border-color 0.15s; min-width: 0;
+}
+.bp-num-input:focus { border-color: var(--accent); }
+.bp-num-input::placeholder { color: var(--text-dim); opacity: 0.45; }
+.bp-unit-btn {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-family: var(--font-mono); font-size: 11px;
+  padding: 0 6px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.bp-unit-btn.active-k { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
+.bp-unit-btn.active-m { background: var(--surface2); color: var(--r3-color); border-color: var(--r3-color); }
+
+.ca-convert-row { display: flex; align-items: center; gap: 6px; padding: 3px 6px; background: var(--bg); border-radius: 4px; }
+.ca-convert-label { font-size: 11px; color: var(--text-dim); }
+.ca-convert-val { font-family: var(--font-mono); font-size: 13px; color: var(--green); font-weight: 500; }
+.ca-convert-val.empty { color: var(--text-dim); opacity: 0.4; }
+
+.quick-input-row { display: flex; align-items: center; gap: 5px; }
+.quick-label { font-size: 11px; color: var(--text-dim); width: 52px; flex-shrink: 0; }
+.quick-input {
+  flex: 1; background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 6px; color: var(--text); font-family: var(--font-mono); font-size: 16px; outline: none;
+  transition: border-color 0.15s;
+}
+.quick-input:focus { border-color: var(--accent); }
+.quick-input::placeholder { color: var(--text-dim); opacity: 0.45; font-size: 13px; }
+.unit-label { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+
+.slot-countdown {
+  margin-top: 6px; font-family: var(--font-mono); font-size: var(--sz-sm);
+  color: var(--accent); text-align: center; letter-spacing: 0.04em; min-height: 18px;
+}
+.slot-countdown.done  { color: var(--green); }
+.slot-countdown.empty { color: transparent; }
+
+.slot-memo {
+  width: 100%; margin-top: 6px;
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 7px; color: var(--text); font-family: var(--font-main); font-size: 16px;
+  outline: none; resize: none; transition: border-color 0.15s;
+}
+.slot-memo:focus { border-color: var(--accent); }
+.slot-memo::placeholder { color: var(--text-dim); opacity: 0.45; }
+
+.slot-btn-row { display: flex; gap: 6px; margin-top: 7px; }
+.reset-btn {
+  flex: 1; padding: 4px 0; background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 11px; font-family: var(--font-main); cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.reset-btn:hover { border-color: var(--r3-color); color: var(--r3-color); }
+.reset-btn.memo:hover { border-color: var(--accent); color: var(--accent); }
+
+/* BP警告 */
+.bp-warn {
+  display: none; font-size: var(--sz-sm); color: var(--r3-color); margin-bottom: 8px;
+  padding: 6px 8px; background: rgba(232,152,120,0.08); border-radius: 5px;
+  border: 1px solid rgba(232,152,120,0.3);
+}
+
+/* 合計ポイント */
+.total-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+}
+.total-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 6px 0; }
+.total-label { font-size: var(--sz-sm); color: var(--text-dim); }
+.total-num { font-family: var(--font-mono); font-size: 26px; color: var(--text-bright); font-weight: 700; }
+.total-note { text-align: center; font-size: var(--sz-sm); color: var(--text-dim); margin-top: 2px; }
+
+/* バージョン */
+.version-label {
+  position: fixed; bottom: 8px; left: 12px; font-size: var(--sz-sm);
+  color: var(--text-dim); opacity: 0.5; pointer-events: none; font-family: var(--font-main);
+}
+
+/* ============================================================ スマホ */
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .col-left, .col-right { display: none; border: none; }
+  .col-center { padding: 12px 12px 60px; }
+  .mob-tabs { display: flex; }
+  .slot-bar-tasks { display: none; }
+  .layout.show-left  .col-left   { display: block; }
+  .layout.show-left  .col-center { display: none; }
+  .layout.show-left  .col-right  { display: none; }
+  .layout.show-right .col-right  { display: block; }
+  .layout.show-right .col-center { display: none; }
+  .layout.show-right .col-left   { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <span class="header-icon">🐈‍⬛</span>
+  <div>
+    <div class="header-title">Colony Action Tool</div>
+    <div class="header-name">[simulator]</div>
+  </div>
+  <div class="header-clock">
+    <div class="clock-time" id="clock-time">--:--</div>
+    <div class="clock-day"  id="clock-day">--</div>
+  </div>
+</div>
+
+<!-- ページ切替 -->
+<div class="page-tabs">
+  <button class="page-tab active" onclick="switchPage(0)">メイン</button>
+  <button class="page-tab"        onclick="switchPage(1)">サブ</button>
+</div>
+
+<!-- スマホタブバー -->
+<div class="mob-tabs">
+  <button class="mob-tab" onclick="switchMobTab('left')">建築</button>
+  <button class="mob-tab active" onclick="switchMobTab('center')">計算</button>
+  <button class="mob-tab" onclick="switchMobTab('right')">進化/兵隊</button>
+</div>
+
+<!-- スロット情報バー -->
+<div class="slot-bar">
+  <span class="slot-bar-event" id="slot-event">読み込み中...</span>
+  <span class="slot-bar-time"  id="slot-time-bar"></span>
+  <div  class="slot-bar-tasks" id="slot-tasks"></div>
+</div>
+
+<!-- 3列レイアウト -->
+<div class="layout" id="layout">
+
+  <!-- 左列：建築スロット -->
+  <div class="col-left" id="col-left">
+    <div class="panel-title">☽ 建築</div>
+    <div class="bp-warn" id="bp-warn">⚠ このスロットは建築戦闘力+1がありません。建築BPはCAポイントになりません。</div>
+    <div id="build-slots"></div>
+  </div>
+
+  <!-- 中央：CA計算 -->
+  <div class="col-center" id="col-center">
+
+    <!-- 現在ポイント & リワード -->
+    <div class="reward-card">
+      <div class="card-title">☽ 現在ポイント & リワード</div>
+      <div class="current-pts-row">
+        <input class="current-pts-input" id="current-pts" type="number" min="0" step="any" placeholder="現在pt" oninput="onCurrentPtsInput()">
+        <button class="pts-unit-btn active-k" id="pts-unit-btn" onclick="togglePtsUnit()">K</button>
+        <span class="pts-label">pt</span>
+      </div>
+      <div class="reward-rows">
+        <div class="reward-row">
+          <span class="reward-row-label r1">R1</span>
+          <span class="reward-threshold" id="thresh-r1">—</span>
+          <div class="reward-bar-track"><div class="reward-bar-fill r1" id="bar-r1" style="width:0%"></div></div>
+          <span class="reward-remain r1" id="remain-r1">—</span>
+        </div>
+        <div class="reward-row">
+          <span class="reward-row-label r2">R2</span>
+          <span class="reward-threshold" id="thresh-r2">—</span>
+          <div class="reward-bar-track"><div class="reward-bar-fill r2" id="bar-r2" style="width:0%"></div></div>
+          <span class="reward-remain r2" id="remain-r2">—</span>
+        </div>
+        <div class="reward-row">
+          <span class="reward-row-label r3">R3</span>
+          <span class="reward-threshold" id="thresh-r3">—</span>
+          <div class="reward-bar-track"><div class="reward-bar-fill r3" id="bar-r3" style="width:0%"></div></div>
+          <span class="reward-remain r3" id="remain-r3">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加速逆算 -->
+    <div class="calc-card">
+      <div class="card-title">☽ 加速逆算</div>
+      <div id="accel-rows"><div class="no-accel">現在のスロットに加速タスクがありません</div></div>
+    </div>
+
+    <!-- 孵化逆算 -->
+    <div class="calc-card">
+      <div class="card-title">☽ 孵化逆算</div>
+      <div id="hatch-rows"><div class="no-hatch">現在のスロットに孵化タスクがありません</div></div>
+    </div>
+
+    <!-- 合計ポイント -->
+    <div class="total-card">
+      <div class="card-title">☽ 選択スロット合計CAポイント</div>
+      <div class="total-row">
+        <span class="total-label">合計</span>
+        <span class="total-num" id="total-num">0</span>
+        <span class="pts-label">pt</span>
+      </div>
+      <div class="total-note" id="total-note">スロットにチェックを入れると加算されます</div>
+    </div>
+
+  </div>
+
+  <!-- 右列：進化・兵隊アリ -->
+  <div class="col-right" id="col-right">
+    <div class="panel-title">☽ 進化</div>
+    <div id="evo-slots"></div>
+    <div class="panel-title" style="margin-top:14px;">☽ 兵隊アリ</div>
+    <div id="hatch-slots"></div>
+  </div>
+
+</div>
+
+<div class="version-label">Mar 17 '26 🐈‍⬛ v0.1</div>
+
+<script>
+// ============================================================
+// 定数
+// ============================================================
+const DB_PATH = 'ca_database.json';
+const ACCEL_KW = '加速アイテム時間が1分毎に';
+const HATCH_PAT = /レベル(\d+)兵隊アリを1匹孵化する/;
+const DAY_LABELS = ['日','月','火','水','木','金','土'];
+
+const BUILD_COUNT = 8;
+const EVO_COUNT   = 1;
+const HATCH_SLOTS = [
+  { key: 'guardian', label: 'ガーディアン' },
+  { key: 'shooter',  label: 'シューター' },
+  { key: 'carrier',  label: 'キャリヤー' },
+  { key: 'mutant',   label: '兵隊アリ異変' },
+  { key: 'enhance',  label: '兵隊アリ強化' },
+];
+
+// ============================================================
+// 状態
+// ============================================================
+let db = null;
+let currentSlot = null;
+let currentPage = 0;
+let ptsUnit = 'K';
+let mobTab = 'center';
+
+// ============================================================
+// フォーマット
+// ============================================================
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(2).replace(/\.?0+$/,'')+'M';
+  if (n >= 1000)    return (n/1000).toFixed(1).replace(/\.?0+$/,'')+'K';
+  return n.toLocaleString();
+}
+function fmtMins(mins) {
+  if (mins < 60) return mins+'分';
+  if (mins < 1440) { const h=Math.floor(mins/60),m=mins%60; return m>0?`${h}時間${m}分`:`${h}時間`; }
+  const d=Math.floor(mins/1440),h=Math.floor((mins%1440)/60),m=mins%60;
+  let s=`${d}日`; if(h>0)s+=`${h}時間`; if(m>0)s+=`${m}分`; return s;
+}
+
+// ============================================================
+// ゲーム時刻
+// ============================================================
+function getGameTime() {
+  const now = new Date();
+  const jstH = now.getHours();
+  let d = now.getDay();
+  if (jstH < 9) d = (d-1+7)%7;
+  return { h: jstH, dayIdx: d, dayLabel: DAY_LABELS[d]+'曜日' };
+}
+function getJSTStr() {
+  const now = new Date();
+  return String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+}
+const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+function getCurrentSlotData() {
+  if (!db) return null;
+  const gt = getGameTime();
+  const dayData = db.schedule[DAY_KEYS[gt.dayIdx]];
+  if (!dayData) return null;
+  for (const slot of dayData.slots) {
+    for (const t of slot.times) {
+      if (parseInt(t.split(':')[0]) === gt.h) return slot;
+    }
+  }
+  return dayData.slots[0];
+}
+
+// ============================================================
+// クロック
+// ============================================================
+function updateClock() {
+  const gt = getGameTime();
+  document.getElementById('clock-time').textContent = getJSTStr();
+  document.getElementById('clock-day').textContent  = gt.dayLabel+'（ゲーム内）';
+}
+
+// ============================================================
+// スロット情報バー
+// ============================================================
+function updateSlotBar() {
+  currentSlot = getCurrentSlotData();
+  if (!currentSlot) return;
+  const h = parseInt(currentSlot.times[0].split(':')[0]);
+  document.getElementById('slot-event').textContent   = currentSlot.event;
+  document.getElementById('slot-time-bar').textContent = currentSlot.times[0]+'〜'+String((h+1)%24).padStart(2,'0')+':00';
+  const tasksEl = document.getElementById('slot-tasks');
+  tasksEl.innerHTML = '';
+  currentSlot.tasks.forEach(t => {
+    const c = document.createElement('div');
+    c.className = 'slot-task-chip';
+    c.innerHTML = `<span>${t.label}</span><span class="chip-pts">${fmtNum(t.points)}pt</span>`;
+    tasksEl.appendChild(c);
+  });
+  updateRewardThresholds();
+  updateAccelSection();
+  updateHatchSection();
+  updateBpWarn();
+  calcAll();
+}
+
+// ============================================================
+// リワード閾値
+// ============================================================
+function updateRewardThresholds() {
+  if (!db || !currentSlot) return;
+  const th = db.reward_thresholds.types[currentSlot.reward_type || 'standard'];
+  if (!th) return;
+  document.getElementById('thresh-r1').textContent = fmtNum(th.reward1);
+  document.getElementById('thresh-r2').textContent = fmtNum(th.reward2);
+  document.getElementById('thresh-r3').textContent = fmtNum(th.reward3);
+}
+function getThresholds() {
+  if (!db || !currentSlot) return { r1:100000, r2:800000, r3:5200000 };
+  const th = db.reward_thresholds.types[currentSlot.reward_type || 'standard'];
+  if (!th) return { r1:100000, r2:800000, r3:5200000 };
+  return { r1:th.reward1, r2:th.reward2, r3:th.reward3 };
+}
+
+// ============================================================
+// 加速逆算セクション
+// ============================================================
+function updateAccelSection() {
+  if (!currentSlot) return;
+  const tasks = currentSlot.tasks.filter(t => t.label.includes(ACCEL_KW));
+  const el = document.getElementById('accel-rows');
+  el.innerHTML = '';
+  if (!tasks.length) { el.innerHTML = '<div class="no-accel">現在のスロットに加速タスクがありません</div>'; return; }
+  tasks.forEach((task, i) => {
+    const row = document.createElement('div');
+    row.className = 'accel-row';
+    row.innerHTML = `
+      <span class="accel-task-label">${task.label}</span>
+      <span class="accel-pts-label">${task.points}pt/分</span>
+      <select class="accel-target-select" id="accel-target-${i}" onchange="calcAll()">
+        <option value="r1">R1</option><option value="r2">R2</option><option value="r3" selected>R3</option>
+      </select>
+      <span class="accel-result" id="accel-result-${i}">—</span>
+    `;
+    el.appendChild(row);
+  });
+}
+
+// ============================================================
+// 孵化逆算セクション
+// ============================================================
+function updateHatchSection() {
+  if (!currentSlot) return;
+  const tasks = currentSlot.tasks.filter(t => HATCH_PAT.test(t.label));
+  const el = document.getElementById('hatch-rows');
+  el.innerHTML = '';
+  if (!tasks.length) { el.innerHTML = '<div class="no-hatch">現在のスロットに孵化タスクがありません</div>'; return; }
+  const options = tasks.map(t => {
+    const m = t.label.match(/レベル(\d+)/);
+    return `<option value="${t.points}">Lv${m?m[1]:'?'}（${t.points}pt/匹）</option>`;
+  }).join('');
+  const row = document.createElement('div');
+  row.className = 'hatch-row';
+  row.innerHTML = `
+    <select class="hatch-select" id="hatch-level-sel" onchange="calcAll()">${options}</select>
+    <select class="hatch-target-select" id="hatch-target-sel" onchange="calcAll()">
+      <option value="r1">R1</option><option value="r2">R2</option><option value="r3" selected>R3</option>
+    </select>
+    <span class="hatch-result" id="hatch-result">—</span>
+    <span class="unit-label">匹</span>
+  `;
+  el.appendChild(row);
+}
+
+// ============================================================
+// 建築BP関連
+// ============================================================
+function getBpTaskPts() {
+  if (!currentSlot) return 0;
+  const t = currentSlot.tasks.find(t => t.label === '建築戦闘力+1');
+  return t ? t.points : 0;
+}
+function updateBpWarn() {
+  const el = document.getElementById('bp-warn');
+  if (el) el.style.display = getBpTaskPts() > 0 ? 'none' : 'block';
+}
+function setUnitBtn(id, unit) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.textContent = unit;
+  btn.className = 'bp-unit-btn ' + (unit==='M'?'active-m':'active-k');
+}
+function toggleBpUnit(id, otherId, slotKey) {
+  const btn = document.getElementById(id);
+  const newUnit = btn.textContent === 'K' ? 'M' : 'K';
+  setUnitBtn(id, newUnit);
+  setUnitBtn(otherId, newUnit);
+  calcAll();
+  saveAllSlots();
+}
+function getBpVal(numId, unitId) {
+  const num  = parseFloat(document.getElementById(numId)?.value) || 0;
+  const unit = document.getElementById(unitId)?.textContent || 'K';
+  return unit==='M' ? num*1000000 : num*1000;
+}
+
+// ============================================================
+// 現在ポイントK/Mトグル
+// ============================================================
+function togglePtsUnit() {
+  ptsUnit = ptsUnit==='K' ? 'M' : 'K';
+  const btn = document.getElementById('pts-unit-btn');
+  btn.textContent = ptsUnit;
+  btn.className = 'pts-unit-btn '+(ptsUnit==='M'?'active-m':'active-k');
+  saveCurrentPts();
+  calcAll();
+}
+function getCurrentPts() {
+  const num = parseFloat(document.getElementById('current-pts').value) || 0;
+  return ptsUnit==='M' ? Math.round(num*1000000) : Math.round(num*1000);
+}
+
+// ============================================================
+// カウントダウン共通
+// ============================================================
+function fmtCountdown(daysVal, hourVal, minVal, startKey) {
+  const totalSecs = daysVal*86400 + hourVal*3600 + minVal*60;
+  if (totalSecs <= 0) return { text: '', cls: 'slot-countdown empty' };
+  let startTime;
+  try {
+    const stored = localStorage.getItem(startKey);
+    const savedRaw = localStorage.getItem(startKey+'_total');
+    const savedTotal = savedRaw ? parseInt(savedRaw) : 0;
+    if (stored && savedTotal === totalSecs) {
+      startTime = parseInt(stored);
+    } else {
+      startTime = Date.now();
+      localStorage.setItem(startKey, startTime);
+      localStorage.setItem(startKey+'_total', totalSecs);
+    }
+  } catch(e) { startTime = Date.now(); }
+  const elapsed   = Math.floor((Date.now() - startTime) / 1000);
+  const remaining = Math.max(0, totalSecs - elapsed);
+  if (remaining === 0) return { text: '完成', cls: 'slot-countdown done' };
+  const dd = Math.floor(remaining/86400);
+  const hh = Math.floor((remaining%86400)/3600);
+  const mm = Math.floor((remaining%3600)/60);
+  const ss = remaining%60;
+  let text = '残 ';
+  if (dd>0) text += `${dd}日 `;
+  text += `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  const finishTime = new Date(startTime + totalSecs*1000);
+  const mo = finishTime.getMonth()+1, d = finishTime.getDate();
+  const dw = DAY_LABELS[finishTime.getDay()];
+  const fh = String(finishTime.getHours()).padStart(2,'0');
+  const fm = String(finishTime.getMinutes()).padStart(2,'0');
+  text += `　完成：${mo}/${d}(${dw}) ${fh}:${fm}`;
+  return { text, cls: 'slot-countdown' };
+}
+
+function updateCountdown(cdId, daysId, hourId, minId, startKey) {
+  const d = parseInt(document.getElementById(daysId)?.value)||0;
+  const h = parseInt(document.getElementById(hourId)?.value)||0;
+  const m = parseInt(document.getElementById(minId)?.value)||0;
+  const cdEl = document.getElementById(cdId);
+  if (!cdEl) return;
+  const r = fmtCountdown(d,h,m,startKey);
+  cdEl.textContent = r.text;
+  cdEl.className   = r.cls;
+}
+
+function onQuickInput(quickId, daysId, hourId, minId, startKey) {
+  const val = document.getElementById(quickId)?.value.trim();
+  const parts = val ? val.split(':') : [];
+  if (parts.length === 3) {
+    document.getElementById(daysId).value = parseInt(parts[0])||0;
+    document.getElementById(hourId).value = parseInt(parts[1])||0;
+    document.getElementById(minId).value  = parseInt(parts[2])||0;
+    try { localStorage.removeItem(startKey); localStorage.removeItem(startKey+'_total'); } catch(e){}
+  }
+  saveAllSlots();
+}
+
+// ============================================================
+// スロットHTML生成：建築
+// ============================================================
+function buildBuildSlot(i) {
+  const k = `b${i}`;
+  return `
+    <div class="slot-card" id="bcard-${i}">
+      <div class="slot-header">
+        <input type="checkbox" class="slot-checkbox" id="bcheck-${i}" onchange="onBuildChange(${i})">
+        <span class="slot-label-text">建築${i+1}</span>
+        <span class="slot-ca-pts empty" id="bca-${i}">— pt</span>
+      </div>
+      <div class="slot-fields">
+        <div class="field-row">
+          <span class="field-label">現在BP</span>
+          <div class="bp-input-wrap">
+            <input class="bp-num-input" id="bcur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
+            <button class="bp-unit-btn active-k" id="bcur-u-${i}" onclick="toggleBpUnit('bcur-u-${i}','bnew-u-${i}')">K</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">完成後BP</span>
+          <div class="bp-input-wrap">
+            <input class="bp-num-input" id="bnew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
+            <button class="bp-unit-btn active-k" id="bnew-u-${i}" onclick="toggleBpUnit('bnew-u-${i}','bcur-u-${i}')">K</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">+BP</span>
+          <span class="field-result empty" id="bdiff-${i}">—</span>
+        </div>
+        <div class="ca-convert-row">
+          <span class="ca-convert-label">CA換算</span>
+          <span class="ca-convert-val empty" id="bcaval-${i}">—</span>
+        </div>
+        <div class="quick-input-row">
+          <span class="quick-label">残り時間</span>
+          <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','cat_b${currentPage}_${i}');onBuildInput(${i})">
+        </div>
+        <div class="field-row">
+          <span class="field-label"></span>
+          <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:44px;flex:none;" oninput="saveAllSlots()">
+          <span class="unit-label">日</span>
+          <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <span class="unit-label">時</span>
+          <input class="bp-num-input" id="bmin-${i}"  type="number" min="0" max="59" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <span class="unit-label">分</span>
+        </div>
+      </div>
+      <div class="slot-countdown empty" id="bcd-${i}">—</div>
+      <textarea class="slot-memo" id="bmemo-${i}" rows="2" placeholder="メモ" oninput="saveAllSlots()"></textarea>
+      <div class="slot-btn-row">
+        <button class="reset-btn" onclick="resetBuildSlot(${i})">リセット</button>
+        <button class="reset-btn memo" onclick="resetMemo('bmemo-${i}')">メモリセット</button>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// スロットHTML生成：進化
+// ============================================================
+function buildEvoSlot(i) {
+  return `
+    <div class="slot-card">
+      <div class="slot-header">
+        <input type="checkbox" class="slot-checkbox" id="echeck-${i}" onchange="calcAll()">
+        <span class="slot-label-text">進化${i+1}</span>
+        <span class="slot-ca-pts empty" id="eca-${i}">— pt</span>
+      </div>
+      <div class="slot-fields">
+        <div class="field-row">
+          <span class="field-label">現在BP</span>
+          <div class="bp-input-wrap">
+            <input class="bp-num-input" id="ecur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
+            <button class="bp-unit-btn active-k" id="ecur-u-${i}" onclick="toggleBpUnit('ecur-u-${i}','enew-u-${i}')">K</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">完成後BP</span>
+          <div class="bp-input-wrap">
+            <input class="bp-num-input" id="enew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
+            <button class="bp-unit-btn active-k" id="enew-u-${i}" onclick="toggleBpUnit('enew-u-${i}','ecur-u-${i}')">K</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">+BP</span>
+          <span class="field-result empty" id="ediff-${i}">—</span>
+        </div>
+        <div class="quick-input-row">
+          <span class="quick-label">残り時間</span>
+          <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','cat_e${currentPage}_${i}');saveAllSlots()">
+        </div>
+        <div class="field-row">
+          <span class="field-label"></span>
+          <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:44px;flex:none;" oninput="saveAllSlots()">
+          <span class="unit-label">日</span>
+          <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <span class="unit-label">時</span>
+          <input class="bp-num-input" id="emin-${i}"  type="number" min="0" max="59" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <span class="unit-label">分</span>
+        </div>
+      </div>
+      <div class="slot-countdown empty" id="ecd-${i}">—</div>
+      <textarea class="slot-memo" id="ememo-${i}" rows="2" placeholder="メモ" oninput="saveAllSlots()"></textarea>
+      <div class="slot-btn-row">
+        <button class="reset-btn" onclick="resetEvoSlot(${i})">リセット</button>
+        <button class="reset-btn memo" onclick="resetMemo('ememo-${i}')">メモリセット</button>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// スロットHTML生成：兵隊アリ
+// ============================================================
+function buildHatchSlot(slotDef) {
+  const k = slotDef.key;
+  return `
+    <div class="slot-card">
+      <div class="slot-label-text" style="margin-bottom:8px;font-size:var(--sz-sm);font-weight:700;color:var(--text-dim);">${slotDef.label}</div>
+      <div class="quick-input-row">
+        <span class="quick-label">残り時間</span>
+        <input class="quick-input" id="hquick-${k}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('hquick-${k}','hdays-${k}','hhour-${k}','hmin-${k}','cat_h${currentPage}_${k}');saveAllSlots()">
+      </div>
+      <div class="field-row" style="margin-top:4px;">
+        <span class="field-label"></span>
+        <input class="bp-num-input" id="hdays-${k}" type="number" min="0" step="1" placeholder="0" style="width:44px;flex:none;" oninput="saveAllSlots()">
+        <span class="unit-label">日</span>
+        <input class="bp-num-input" id="hhour-${k}" type="number" min="0" max="23" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+        <span class="unit-label">時</span>
+        <input class="bp-num-input" id="hmin-${k}"  type="number" min="0" max="59" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+        <span class="unit-label">分</span>
+      </div>
+      <div class="slot-countdown empty" id="hcd-${k}">—</div>
+      <textarea class="slot-memo" id="hmemo-${k}" rows="2" placeholder="メモ" oninput="saveAllSlots()"></textarea>
+      <div class="slot-btn-row">
+        <button class="reset-btn" onclick="resetHatchSlot('${k}')">リセット</button>
+        <button class="reset-btn memo" onclick="resetMemo('hmemo-${k}')">メモリセット</button>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// スロット計算：建築
+// ============================================================
+function onBuildInput(i) {
+  const cur = getBpVal(`bcur-${i}`, `bcur-u-${i}`);
+  const nw  = getBpVal(`bnew-${i}`, `bnew-u-${i}`);
+  const diffEl  = document.getElementById(`bdiff-${i}`);
+  const caValEl = document.getElementById(`bcaval-${i}`);
+  const caEl    = document.getElementById(`bca-${i}`);
+  const cardEl  = document.getElementById(`bcard-${i}`);
+  const checked = document.getElementById(`bcheck-${i}`).checked;
+  if (cur>0 && nw>cur) {
+    const diff = Math.round(nw-cur);
+    diffEl.textContent = '+'+fmtNum(diff);
+    diffEl.classList.remove('empty');
+    const ptPerBp = getBpTaskPts();
+    if (ptPerBp>0) {
+      const ca = diff*ptPerBp;
+      caEl.textContent = fmtNum(ca)+' pt'; caEl.classList.remove('empty');
+      caValEl.textContent = fmtNum(ca)+' pt'; caValEl.className = 'ca-convert-val';
+    } else {
+      caEl.textContent='— pt'; caEl.classList.add('empty');
+      caValEl.textContent='このスロットでは加算されません'; caValEl.className='ca-convert-val empty';
+    }
+  } else {
+    diffEl.textContent='—'; diffEl.classList.add('empty');
+    caEl.textContent='— pt'; caEl.classList.add('empty');
+    caValEl.textContent='—'; caValEl.className='ca-convert-val empty';
+  }
+  cardEl.classList.toggle('checked', checked);
+  saveAllSlots(); calcAll();
+}
+
+function onBuildChange(i) { onBuildInput(i); }
+
+// ============================================================
+// スロット計算：進化
+// ============================================================
+function onEvoInput(i) {
+  const cur = getBpVal(`ecur-${i}`, `ecur-u-${i}`);
+  const nw  = getBpVal(`enew-${i}`, `enew-u-${i}`);
+  const diffEl = document.getElementById(`ediff-${i}`);
+  if (cur>0 && nw>cur) {
+    diffEl.textContent = '+'+fmtNum(Math.round(nw-cur));
+    diffEl.classList.remove('empty');
+  } else {
+    diffEl.textContent='—'; diffEl.classList.add('empty');
+  }
+  saveAllSlots();
+}
+
+// ============================================================
+// リセット
+// ============================================================
+function resetBuildSlot(i) {
+  ['bcur','bnew'].forEach(f => document.getElementById(`${f}-${i}`).value='');
+  ['bdays','bhour','bmin','bquick'].forEach(f => document.getElementById(`${f}-${i}`).value='');
+  document.getElementById(`bcheck-${i}`).checked = false;
+  setUnitBtn(`bcur-u-${i}`,'K'); setUnitBtn(`bnew-u-${i}`,'K');
+  try { localStorage.removeItem(`cat_b${currentPage}_${i}`); localStorage.removeItem(`cat_b${currentPage}_${i}_total`); } catch(e){}
+  onBuildInput(i);
+}
+function resetEvoSlot(i) {
+  ['ecur','enew'].forEach(f => document.getElementById(`${f}-${i}`).value='');
+  ['edays','ehour','emin','equick'].forEach(f => document.getElementById(`${f}-${i}`).value='');
+  setUnitBtn(`ecur-u-${i}`,'K'); setUnitBtn(`enew-u-${i}`,'K');
+  try { localStorage.removeItem(`cat_e${currentPage}_${i}`); localStorage.removeItem(`cat_e${currentPage}_${i}_total`); } catch(e){}
+  onEvoInput(i); saveAllSlots();
+}
+function resetHatchSlot(k) {
+  ['hdays','hhour','hmin','hquick'].forEach(f => document.getElementById(`${f}-${k}`).value='');
+  try { localStorage.removeItem(`cat_h${currentPage}_${k}`); localStorage.removeItem(`cat_h${currentPage}_${k}_total`); } catch(e){}
+  saveAllSlots();
+}
+function resetMemo(id) { document.getElementById(id).value=''; saveAllSlots(); }
+
+// ============================================================
+// 全体計算
+// ============================================================
+function calcAll() {
+  const pts = getCurrentPts();
+  const th  = getThresholds();
+  ['r1','r2','r3'].forEach(key => {
+    const thVal = th[key];
+    const remain = Math.max(0, thVal-pts);
+    const pct = Math.min(100, thVal>0 ? pts/thVal*100 : 0);
+    document.getElementById('bar-'+key).style.width = pct+'%';
+    const el = document.getElementById('remain-'+key);
+    if (remain===0) { el.textContent='達成'; el.className='reward-remain achieved'; }
+    else { el.textContent=fmtNum(remain)+' pt'; el.className='reward-remain '+key; }
+  });
+  // 加速逆算
+  if (currentSlot) {
+    const accelTasks = currentSlot.tasks.filter(t => t.label.includes(ACCEL_KW));
+    accelTasks.forEach((task, i) => {
+      const selEl = document.getElementById(`accel-target-${i}`);
+      const resEl = document.getElementById(`accel-result-${i}`);
+      if (!selEl||!resEl) return;
+      const remain = Math.max(0, th[selEl.value]-pts);
+      if (remain===0) { resEl.textContent='達成済'; resEl.className='accel-result achieved'; }
+      else { resEl.textContent=fmtMins(Math.ceil(remain/task.points)); resEl.className='accel-result'; }
+    });
+    // 孵化逆算
+    const hLvEl = document.getElementById('hatch-level-sel');
+    const hTgEl = document.getElementById('hatch-target-sel');
+    const hRsEl = document.getElementById('hatch-result');
+    if (hLvEl&&hTgEl&&hRsEl) {
+      const hPts = parseInt(hLvEl.value)||0;
+      const remain = Math.max(0, th[hTgEl.value]-pts);
+      if (remain===0) { hRsEl.textContent='達成済'; hRsEl.className='hatch-result achieved'; }
+      else if (hPts>0) { hRsEl.textContent=fmtNum(Math.ceil(remain/hPts)); hRsEl.className='hatch-result'; }
+    }
+  }
+  // 建築合計
+  let total=0, cnt=0;
+  for (let i=0; i<BUILD_COUNT; i++) {
+    if (!document.getElementById(`bcheck-${i}`)?.checked) continue;
+    const cur = getBpVal(`bcur-${i}`,`bcur-u-${i}`);
+    const nw  = getBpVal(`bnew-${i}`,`bnew-u-${i}`);
+    const ptPerBp = getBpTaskPts();
+    if (cur>0 && nw>cur && ptPerBp>0) { total += Math.round(nw-cur)*ptPerBp; cnt++; }
+  }
+  document.getElementById('total-num').textContent = fmtNum(total);
+  document.getElementById('total-note').textContent = cnt>0
+    ? `${cnt}スロット選択中 ／ 現在pt(${fmtNum(pts)}) + 建築(${fmtNum(total)}) = ${fmtNum(pts+total)} pt`
+    : 'スロットにチェックを入れると加算されます';
+  updateBpWarn();
+}
+
+// ============================================================
+// ストレージ
+// ============================================================
+function skPts()  { return `cat_s_p${currentPage}_pts`; }
+
+function saveCurrentPts() {
+  try { localStorage.setItem(skPts(), JSON.stringify({val: document.getElementById('current-pts').value, unit: ptsUnit})); } catch(e){}
+}
+function loadCurrentPts() {
+  try {
+    const raw = localStorage.getItem(skPts());
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data && data.val !== undefined) {
+      document.getElementById('current-pts').value = data.val;
+      ptsUnit = data.unit || 'K';
+    }
+    const btn = document.getElementById('pts-unit-btn');
+    btn.textContent = ptsUnit;
+    btn.className = 'pts-unit-btn '+(ptsUnit==='M'?'active-m':'active-k');
+  } catch(e){}
+}
+function onCurrentPtsInput() { saveCurrentPts(); calcAll(); }
+
+function saveAllSlots() {
+  const data = { build:[], evo:[], hatch:{} };
+  for (let i=0; i<BUILD_COUNT; i++) {
+    data.build.push({
+      curNum: document.getElementById(`bcur-${i}`)?.value||'',
+      curUnit: document.getElementById(`bcur-u-${i}`)?.textContent||'K',
+      newNum: document.getElementById(`bnew-${i}`)?.value||'',
+      newUnit: document.getElementById(`bnew-u-${i}`)?.textContent||'K',
+      days: document.getElementById(`bdays-${i}`)?.value||'',
+      hour: document.getElementById(`bhour-${i}`)?.value||'',
+      min:  document.getElementById(`bmin-${i}`)?.value||'',
+      quick: document.getElementById(`bquick-${i}`)?.value||'',
+      memo: document.getElementById(`bmemo-${i}`)?.value||'',
+      checked: document.getElementById(`bcheck-${i}`)?.checked||false,
+    });
+  }
+  for (let i=0; i<EVO_COUNT; i++) {
+    data.evo.push({
+      curNum: document.getElementById(`ecur-${i}`)?.value||'',
+      curUnit: document.getElementById(`ecur-u-${i}`)?.textContent||'K',
+      newNum: document.getElementById(`enew-${i}`)?.value||'',
+      newUnit: document.getElementById(`enew-u-${i}`)?.textContent||'K',
+      days: document.getElementById(`edays-${i}`)?.value||'',
+      hour: document.getElementById(`ehour-${i}`)?.value||'',
+      min:  document.getElementById(`emin-${i}`)?.value||'',
+      quick: document.getElementById(`equick-${i}`)?.value||'',
+      memo: document.getElementById(`ememo-${i}`)?.value||'',
+    });
+  }
+  HATCH_SLOTS.forEach(s => {
+    data.hatch[s.key] = {
+      days: document.getElementById(`hdays-${s.key}`)?.value||'',
+      hour: document.getElementById(`hhour-${s.key}`)?.value||'',
+      min:  document.getElementById(`hmin-${s.key}`)?.value||'',
+      quick: document.getElementById(`hquick-${s.key}`)?.value||'',
+      memo: document.getElementById(`hmemo-${s.key}`)?.value||'',
+    };
+  });
+  try { localStorage.setItem(`cat_s_p${currentPage}_slots`, JSON.stringify(data)); } catch(e){}
+}
+
+function loadAllSlots() {
+  try {
+    const raw = localStorage.getItem(`cat_s_p${currentPage}_slots`);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    (data.build||[]).forEach((d,i) => {
+      if (document.getElementById(`bcur-${i}`)) {
+        document.getElementById(`bcur-${i}`).value = d.curNum||'';
+        document.getElementById(`bnew-${i}`).value = d.newNum||'';
+        document.getElementById(`bdays-${i}`).value = d.days||'';
+        document.getElementById(`bhour-${i}`).value = d.hour||'';
+        document.getElementById(`bmin-${i}`).value  = d.min||'';
+        document.getElementById(`bquick-${i}`).value = d.quick||'';
+        document.getElementById(`bmemo-${i}`).value = d.memo||'';
+        document.getElementById(`bcheck-${i}`).checked = !!d.checked;
+        if (d.curUnit) setUnitBtn(`bcur-u-${i}`, d.curUnit);
+        if (d.newUnit) setUnitBtn(`bnew-u-${i}`, d.newUnit);
+        onBuildInput(i);
+      }
+    });
+    (data.evo||[]).forEach((d,i) => {
+      if (document.getElementById(`ecur-${i}`)) {
+        document.getElementById(`ecur-${i}`).value = d.curNum||'';
+        document.getElementById(`enew-${i}`).value = d.newNum||'';
+        document.getElementById(`edays-${i}`).value = d.days||'';
+        document.getElementById(`ehour-${i}`).value = d.hour||'';
+        document.getElementById(`emin-${i}`).value  = d.min||'';
+        document.getElementById(`equick-${i}`).value = d.quick||'';
+        document.getElementById(`ememo-${i}`).value = d.memo||'';
+        if (d.curUnit) setUnitBtn(`ecur-u-${i}`, d.curUnit);
+        if (d.newUnit) setUnitBtn(`enew-u-${i}`, d.newUnit);
+        onEvoInput(i);
+      }
+    });
+    HATCH_SLOTS.forEach(s => {
+      const d = (data.hatch||{})[s.key];
+      if (!d) return;
+      document.getElementById(`hdays-${s.key}`).value = d.days||'';
+      document.getElementById(`hhour-${s.key}`).value = d.hour||'';
+      document.getElementById(`hmin-${s.key}`).value  = d.min||'';
+      document.getElementById(`hquick-${s.key}`).value = d.quick||'';
+      document.getElementById(`hmemo-${s.key}`).value = d.memo||'';
+    });
+  } catch(e){}
+}
+
+// ============================================================
+// ページ切替
+// ============================================================
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page-tab').forEach((el,i) => el.classList.toggle('active', i===page));
+  loadCurrentPts();
+  loadAllSlots();
+  calcAll();
+}
+
+// ============================================================
+// スマホタブ切替
+// ============================================================
+function switchMobTab(tab) {
+  mobTab = tab;
+  document.querySelectorAll('.mob-tab').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.mob-tab[onclick*="${tab}"]`).classList.add('active');
+  const layout = document.getElementById('layout');
+  layout.className = 'layout' + (tab==='left'?' show-left': tab==='right'?' show-right':'');
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+function init() {
+  // 建築スロット生成
+  const buildEl = document.getElementById('build-slots');
+  for (let i=0; i<BUILD_COUNT; i++) buildEl.innerHTML += buildBuildSlot(i);
+  // 進化スロット生成
+  const evoEl = document.getElementById('evo-slots');
+  for (let i=0; i<EVO_COUNT; i++) evoEl.innerHTML += buildEvoSlot(i);
+  // 兵隊アリスロット生成
+  const hatchEl = document.getElementById('hatch-slots');
+  HATCH_SLOTS.forEach(s => hatchEl.innerHTML += buildHatchSlot(s));
+
+  // DB読み込み
+  fetch(DB_PATH).then(r=>r.json()).then(data => {
+    db = data;
+    updateSlotBar();
+  }).catch(() => {
+    document.getElementById('slot-event').textContent = 'DBロード失敗（ca_database.jsonを同フォルダに置いてください）';
+  });
+
+  loadCurrentPts();
+  loadAllSlots();
+  updateClock();
+
+  // 1秒ごと更新
+  setInterval(() => {
+    updateClock();
+    for (let i=0; i<BUILD_COUNT; i++) updateCountdown(`bcd-${i}`,`bdays-${i}`,`bhour-${i}`,`bmin-${i}`,`cat_b${currentPage}_${i}`);
+    for (let i=0; i<EVO_COUNT; i++)   updateCountdown(`ecd-${i}`,`edays-${i}`,`ehour-${i}`,`emin-${i}`,`cat_e${currentPage}_${i}`);
+    HATCH_SLOTS.forEach(s => updateCountdown(`hcd-${s.key}`,`hdays-${s.key}`,`hhour-${s.key}`,`hmin-${s.key}`,`cat_h${currentPage}_${s.key}`));
+  }, 1000);
+
+  // 1分ごとにスロット再確認
+  setInterval(() => {
+    updateSlotBar();
+  }, 60000);
+}
+
+init();
+</script>
+</body>
+</html>

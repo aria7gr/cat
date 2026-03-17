@@ -5,6 +5,7 @@
   Mar 16 '26 🐾 v1.0  初回リリース：メイン7スロット・サブ4スロット・PC3列・スマホ1列
   Mar 16 '26 🐾 v1.1  残り時間入力（日・時・分）に変更・完成予想時刻を表示・ズーム防止
   Mar 16 '26 🐾 v1.2  dd:hh:mmクイック入力・スロットリセット・メモリセット追加
+  Mar 17 '26 🐾 v1.3  完成予想時刻に曜日追加
 -->
 <html lang="ja">
 <head>
@@ -497,13 +498,15 @@ function updateCountdown(key) {
   if (dd > 0) text += `${dd}日 `;
   text += `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
 
-  // 完成予想時刻
+  // 完成予想時刻（曜日付き）
   const finishTime = new Date(startTime + totalSecs * 1000);
+  const DAY_LABELS = ['日','月','火','水','木','金','土'];
   const mo = finishTime.getMonth() + 1;
   const d  = finishTime.getDate();
+  const dw = DAY_LABELS[finishTime.getDay()];
   const fh = String(finishTime.getHours()).padStart(2,'0');
   const fm = String(finishTime.getMinutes()).padStart(2,'0');
-  text += `　完成：${mo}/${d} ${fh}:${fm}`;
+  text += `　完成：${mo}/${d}(${dw}) ${fh}:${fm}`;
 
   cdEl.textContent = text;
   cdEl.className = 'slot-countdown';

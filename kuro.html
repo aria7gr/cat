@@ -38,8 +38,8 @@
   --font-main: 'Noto Sans JP', sans-serif;
   --font-mono: 'Roboto Mono', monospace;
   --sz-sm:   12px;
-  --sz-base: 14px;
-  --sz-lg:   16px;
+  --sz-base: 15px;
+  --sz-lg:   17px;
   --sz-xl:   22px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,35 +53,43 @@ body {
 
 /* ============================================================ ヘッダー */
 .header {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
   border-bottom: 1px solid var(--border);
-  padding: 0 20px;
-  height: 52px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 200;
+  backdrop-filter: blur(12px);
+  gap: 8px;
 }
 .header-left { display: flex; align-items: center; gap: 10px; }
-.header-icon { font-size: 22px; line-height: 1; }
+.header-icon { font-size: 20px; line-height: 1; }
 .header-title {
   font-size: var(--sz-sm);
-  color: var(--text-dim);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.header-name {
-  font-size: var(--sz-lg);
   font-weight: 700;
-  color: var(--text-bright);
-  letter-spacing: 0.04em;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
-.header-right { display: flex; align-items: center; gap: 16px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
 .clock-wrap { text-align: right; }
-.clock-time { font-family: var(--font-mono); font-size: var(--sz-xl); color: var(--text-bright); letter-spacing: 0.04em; }
-.clock-day  { font-size: var(--sz-sm); color: var(--accent); }
+.clock-time {
+  font-family: var(--font-mono);
+  font-size: var(--sz-xl);
+  color: var(--text-bright);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+.clock-date {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  text-align: right;
+  margin-top: 2px;
+}
 
 /* ============================================================ ページ切替タブ */
 .page-tabs {
@@ -152,7 +160,7 @@ body {
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 52px;
+  top: 48px;
   z-index: 100;
 }
 .mob-tab {
@@ -280,11 +288,18 @@ body {
 
 /* 畳んだ時のメモ preview */
 .slot-memo-preview {
-  font-size: 11px; color: var(--text-dim); margin-top: 3px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  margin-top: 4px;
+  line-height: 1.5;
   display: none;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: pre-wrap;
 }
-.slot-card.collapsed .slot-memo-preview { display: block; }
+.slot-card.collapsed .slot-memo-preview { display: -webkit-box; }
 
 .slot-header { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
 .slot-checkbox { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
@@ -502,15 +517,12 @@ body {
 <div class="header">
   <div class="header-left">
     <span class="header-icon">🐈‍⬛</span>
-    <div>
-      <div class="header-title">Colony Action Tool</div>
-      <div class="header-name">[simulator]</div>
-    </div>
+    <div class="header-title">🐈‍⬛ Colony Action Tool [simulator]</div>
   </div>
   <div class="header-right">
     <div class="clock-wrap">
-      <div class="clock-time" id="clock-time">--:--</div>
-      <div class="clock-day"  id="clock-day">--</div>
+      <div class="clock-time" id="clock-time">--:--:--</div>
+      <div class="clock-date" id="clock-date">---</div>
     </div>
   </div>
 </div>
@@ -706,8 +718,13 @@ function getCurrentSlotData() {
 // ============================================================
 function updateClock() {
   const gt = getGameTime();
-  document.getElementById('clock-time').textContent = getJSTStr();
-  document.getElementById('clock-day').textContent  = gt.dayLabel+'（ゲーム内）';
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock-time').textContent = `${h}:${m}:${s}`;
+  document.getElementById('clock-date').textContent =
+    `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}(${DAY_LABELS[now.getDay()]})JST　ゲーム内:${gt.dayLabel}`;
 }
 
 // ============================================================

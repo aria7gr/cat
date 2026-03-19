@@ -5,6 +5,8 @@
   v0.1  2026.03.17  初回リリース：中央CA計算・左建築スロット・右進化+兵隊アリ・PC3列/スマホタブ・メイン/サブ切替
   v0.2  2026.03.19  レイアウト再設計(左建築1〜4/中建築5〜7+進化/右CA計算)・タスク折りたたみ表示・一括コピペ機能・🐈‍⬛ファビコン・ヘッダーデザイン刷新・サイド幅拡張・孵化スロット削除
   v0.3  2026.03.19  パターンA左ボーダーアクセント・スロット個別/一括折りたたみ(ダッシュボード表示)・ページ切替時の入力クリア修正
+  v0.4  2026.03.19  フォントサイズ引き上げ・ヘッダー1行化・日付表示追加（チャトラ準拠）
+  v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -275,31 +277,32 @@ body {
   margin-bottom: 0;
 }
 .slot-toggle-btn:focus { outline: none; }
-.slot-toggle-label { font-size: var(--sz-sm); font-weight: 700; color: var(--text-dim); flex: 1; }
+.slot-toggle-label { font-size: var(--sz-base); font-weight: 700; color: var(--text-dim); flex: 1; }
 .slot-toggle-cd {
-  font-family: var(--font-mono); font-size: 10px; color: var(--accent);
+  font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--accent);
   flex: 2; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.slot-toggle-arrow { font-size: 10px; color: var(--text-dim); flex-shrink: 0; margin-left: 4px; }
+.slot-toggle-arrow { font-size: var(--sz-sm); color: var(--text-dim); flex-shrink: 0; margin-left: 4px; }
 
 /* 折りたたみ本体 */
 .slot-body { overflow: hidden; transition: max-height 0.2s ease; }
 .slot-body.collapsed { max-height: 0 !important; }
 
-/* 畳んだ時のメモ preview */
+/* 畳んだ時：カード高さを120pxに固定、メモpreviewを表示 */
+.slot-card.collapsed { min-height: 120px; }
 .slot-memo-preview {
-  font-size: var(--sz-sm);
+  font-size: var(--sz-base);
   color: var(--text-dim);
-  margin-top: 4px;
+  margin-top: 6px;
   line-height: 1.5;
-  display: none;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   white-space: pre-wrap;
+  visibility: hidden;
 }
-.slot-card.collapsed .slot-memo-preview { display: -webkit-box; }
+.slot-card.collapsed .slot-memo-preview { visibility: visible; }
 
 .slot-header { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
 .slot-checkbox { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
@@ -361,7 +364,7 @@ body {
   outline: none; resize: none; transition: border-color 0.15s;
 }
 .slot-memo:focus { border-color: var(--accent); }
-.slot-memo::placeholder { color: var(--text-dim); opacity: 0.45; }
+.slot-memo::placeholder { color: var(--text-dim); opacity: 0.45; font-size: var(--sz-base); }
 
 .slot-btn-row { display: flex; gap: 5px; margin-top: 5px; }
 .reset-btn {
@@ -645,7 +648,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 19 '26 🐈‍⬛ v0.3</div>
+<div class="version-label">Mar 19 '26 🐈‍⬛ v0.4.1</div>
 
 <script>
 // ============================================================

@@ -1,14 +1,17 @@
-<!DOCTYPE html>
 <!--
-  cat_s0.1.html
-  🐈‍⬛ Colony Action Tool [simulator] - クロ
-  Mar 17 '26 🐈‍⬛ v0.1  初回リリース：中央CA計算・左建築スロット・右進化+兵隊アリ・PC3列/スマホタブ・メイン/サブ切替
+  🐈‍⬛ CAT [simulator] / クロ
+  Colony Action Tool - simulator
+
+  v0.1  2026.03.17  初回リリース：中央CA計算・左建築スロット・右進化+兵隊アリ・PC3列/スマホタブ・メイン/サブ切替
+  v0.2  2026.03.19  レイアウト再設計(左建築1〜4/中建築5〜7+進化/右CA計算)・タスク折りたたみ表示・一括コピペ機能・🐈‍⬛ファビコン・ヘッダーデザイン刷新・サイド幅拡張・孵化スロット削除
 -->
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CAT [simulator]</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈‍⬛</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -22,18 +25,21 @@
   --text-dim:  #8a8a9a;
   --text-bright: #ffffff;
   --accent:    #c8b8e8;
+  --accent2:   #ddd0f8;
   --green:     #a0d0c0;
   --r1-color:  #80c898;
   --r2-color:  #c8b8e8;
   --r3-color:  #e89878;
+  --highlight: rgba(200,184,232,0.10);
+  --highlight-border: rgba(200,184,232,0.4);
   --checked-border: rgba(200,184,232,0.7);
   --checked-bg:     rgba(200,184,232,0.07);
   --font-main: 'Noto Sans JP', sans-serif;
   --font-mono: 'Roboto Mono', monospace;
-  --sz-sm:  12px;
-  --sz-base: 15px;
-  --sz-lg:  17px;
-  --sz-xl:  22px;
+  --sz-sm:   12px;
+  --sz-base: 14px;
+  --sz-lg:   16px;
+  --sz-xl:   22px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -48,19 +54,32 @@ body {
 .header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
+  padding: 0 20px;
+  height: 52px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 200;
 }
-.header-icon { font-size: 20px; line-height: 1; }
-.header-title { font-size: var(--sz-sm); color: var(--text-dim); letter-spacing: 0.08em; }
-.header-name { font-size: var(--sz-lg); font-weight: 700; color: var(--text-bright); }
-.header-clock { margin-left: auto; text-align: right; }
-.clock-time { font-family: var(--font-mono); font-size: var(--sz-xl); color: var(--text-bright); }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-icon { font-size: 22px; line-height: 1; }
+.header-title {
+  font-size: var(--sz-sm);
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.header-name {
+  font-size: var(--sz-lg);
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 0.04em;
+}
+.header-right { display: flex; align-items: center; gap: 16px; }
+.clock-wrap { text-align: right; }
+.clock-time { font-family: var(--font-mono); font-size: var(--sz-xl); color: var(--text-bright); letter-spacing: 0.04em; }
 .clock-day  { font-size: var(--sz-sm); color: var(--accent); }
 
 /* ============================================================ ページ切替タブ */
@@ -89,7 +108,7 @@ body {
 .slot-bar {
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
-  padding: 8px 16px;
+  padding: 7px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -109,17 +128,16 @@ body {
 /* ============================================================ PC 3列レイアウト */
 .layout {
   display: grid;
-  grid-template-columns: 220px 1fr 220px;
-  min-height: calc(100vh - 120px);
+  grid-template-columns: 264px 264px 1fr;
+  min-height: calc(100vh - 104px);
 }
-.col-left, .col-right {
+.col-left, .col-mid {
   background: var(--surface);
   overflow-y: auto;
   padding: 14px 12px 60px;
+  border-right: 1px solid var(--border);
 }
-.col-left  { border-right: 1px solid var(--border); }
-.col-right { border-left:  1px solid var(--border); }
-.col-center {
+.col-right {
   overflow-y: auto;
   padding: 16px 16px 60px;
   display: flex;
@@ -133,7 +151,7 @@ body {
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 56px;
+  top: 52px;
   z-index: 100;
 }
 .mob-tab {
@@ -146,10 +164,46 @@ body {
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
 }
 .mob-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-/* ============================================================ 共通カードスタイル */
+/* ============================================================ パネルタイトル */
+.panel-title {
+  font-size: var(--sz-sm);
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ============================================================ 一括コピペボタン */
+.bulk-btn-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.bulk-btn {
+  flex: 1;
+  padding: 5px 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  font-size: var(--sz-sm);
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.bulk-btn:hover { border-color: var(--accent); color: var(--accent); }
+.bulk-btn.paste:hover { border-color: var(--r1-color); color: var(--r1-color); }
+
+/* ============================================================ 共通カード */
 .card-title {
   font-size: var(--sz-sm);
   color: var(--accent);
@@ -159,205 +213,211 @@ body {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
-.panel-title {
-  font-size: var(--sz-sm);
-  color: var(--accent);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-}
-
-/* ============================================================ 現在ポイント & リワード */
-.reward-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 16px;
-}
-.current-pts-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.current-pts-input {
-  background: var(--surface3);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 7px 12px;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 16px;
-  width: 140px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.current-pts-input:focus { border-color: var(--accent); }
-.current-pts-input::placeholder { color: var(--text-dim); opacity: 0.5; font-size: var(--sz-base); }
-.pts-unit-btn {
-  background: var(--surface3); border: 1px solid var(--border); border-radius: 5px;
-  color: var(--text-dim); font-family: var(--font-mono); font-size: var(--sz-base);
-  padding: 7px 12px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.pts-unit-btn.active-k { color: var(--accent); border-color: var(--accent); background: var(--surface2); }
-.pts-unit-btn.active-m { color: var(--r3-color); border-color: var(--r3-color); background: var(--surface2); }
-.pts-label { font-size: var(--sz-sm); color: var(--text-dim); }
-
-.reward-rows { display: flex; flex-direction: column; gap: 9px; }
-.reward-row  { display: flex; align-items: center; gap: 10px; }
-.reward-row-label { font-size: var(--sz-sm); font-weight: 700; width: 28px; flex-shrink: 0; }
-.reward-row-label.r1 { color: var(--r1-color); }
-.reward-row-label.r2 { color: var(--r2-color); }
-.reward-row-label.r3 { color: var(--r3-color); }
-.reward-threshold { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--text-dim); width: 52px; flex-shrink: 0; text-align: right; }
-.reward-bar-track { flex: 1; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
-.reward-bar-fill  { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
-.reward-bar-fill.r1 { background: var(--r1-color); }
-.reward-bar-fill.r2 { background: var(--r2-color); }
-.reward-bar-fill.r3 { background: var(--r3-color); }
-.reward-remain { font-family: var(--font-mono); font-size: var(--sz-sm); width: 80px; text-align: right; flex-shrink: 0; }
-.reward-remain.r1 { color: var(--r1-color); }
-.reward-remain.r2 { color: var(--r2-color); }
-.reward-remain.r3 { color: var(--r3-color); }
-.reward-remain.achieved { color: var(--green); }
-
-/* ============================================================ 加速逆算 */
 .calc-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px 16px;
 }
-.accel-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px; background: var(--surface2);
-  border-radius: 6px; border: 1px solid var(--border);
-  flex-wrap: wrap; margin-bottom: 6px;
-}
-.accel-task-label { font-size: var(--sz-sm); color: var(--text); flex: 1; min-width: 120px; }
-.accel-pts-label  { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--green); flex-shrink: 0; }
-.accel-target-select {
-  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
-  padding: 4px 8px; color: var(--text); font-family: var(--font-mono); font-size: var(--sz-sm);
-  outline: none; cursor: pointer; appearance: none; width: 52px; text-align: center;
-}
-.accel-result { font-family: var(--font-mono); font-size: var(--sz-lg); color: var(--green); font-weight: 500; }
-.accel-result.achieved { color: var(--r1-color); }
-.no-accel { font-size: var(--sz-sm); color: var(--text-dim); padding: 6px 4px; font-style: italic; }
 
-/* ============================================================ 孵化逆算 */
-.hatch-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px; background: var(--surface2);
-  border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;
-}
-.hatch-select, .hatch-target-select {
-  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
-  padding: 4px 8px; color: var(--text); font-family: var(--font-mono); font-size: var(--sz-sm);
-  outline: none; cursor: pointer; appearance: none;
-}
-.hatch-select { flex: 1; min-width: 140px; }
-.hatch-target-select { width: 52px; text-align: center; }
-.hatch-result { font-family: var(--font-mono); font-size: var(--sz-lg); color: var(--green); font-weight: 500; }
-.hatch-result.achieved { color: var(--r1-color); }
-.no-hatch { font-size: var(--sz-sm); color: var(--text-dim); padding: 6px 4px; font-style: italic; }
-
-/* ============================================================ スロットカード（共通） */
+/* ============================================================ スロットカード */
 .slot-card {
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   margin-bottom: 8px;
   transition: border-color 0.15s;
 }
 .slot-card:hover { border-color: var(--accent); }
 .slot-card.checked { border-color: var(--checked-border); background: var(--checked-bg); }
 
-.slot-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.slot-checkbox { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.slot-header { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.slot-checkbox { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
 .slot-label-text { font-size: var(--sz-sm); font-weight: 700; color: var(--text-dim); flex: 1; }
-.slot-ca-pts { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--green); }
+.slot-ca-pts { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
 .slot-ca-pts.empty { color: var(--text-dim); opacity: 0.4; }
 
-.slot-fields { display: flex; flex-direction: column; gap: 5px; }
-.field-row { display: flex; align-items: center; gap: 5px; }
-.field-label { font-size: 11px; color: var(--text-dim); width: 52px; flex-shrink: 0; }
-.field-result { flex: 1; font-family: var(--font-mono); font-size: 13px; color: var(--green); padding: 4px 6px; background: var(--bg); border-radius: 4px; }
+.slot-fields { display: flex; flex-direction: column; gap: 4px; }
+.field-row { display: flex; align-items: center; gap: 4px; }
+.field-label { font-size: 11px; color: var(--text-dim); width: 50px; flex-shrink: 0; }
+.field-result { flex: 1; font-family: var(--font-mono); font-size: 12px; color: var(--green); padding: 3px 6px; background: var(--bg); border-radius: 4px; }
 .field-result.empty { color: var(--text-dim); opacity: 0.4; }
 
-.bp-input-wrap { flex: 1; display: flex; gap: 4px; min-width: 0; }
+.bp-input-wrap { flex: 1; display: flex; gap: 3px; min-width: 0; }
 .bp-num-input {
   flex: 1; background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
-  padding: 4px 6px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
+  padding: 3px 5px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
   outline: none; transition: border-color 0.15s; min-width: 0;
 }
 .bp-num-input:focus { border-color: var(--accent); }
 .bp-num-input::placeholder { color: var(--text-dim); opacity: 0.45; }
+
 .bp-unit-btn {
   background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
   color: var(--text-dim); font-family: var(--font-mono); font-size: 11px;
-  padding: 0 6px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  padding: 0 5px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap; flex-shrink: 0;
 }
 .bp-unit-btn.active-k { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
 .bp-unit-btn.active-m { background: var(--surface2); color: var(--r3-color); border-color: var(--r3-color); }
 
-.ca-convert-row { display: flex; align-items: center; gap: 6px; padding: 3px 6px; background: var(--bg); border-radius: 4px; }
+.ca-convert-row { display: flex; align-items: center; gap: 5px; padding: 2px 5px; background: var(--bg); border-radius: 4px; }
 .ca-convert-label { font-size: 11px; color: var(--text-dim); }
-.ca-convert-val { font-family: var(--font-mono); font-size: 13px; color: var(--green); font-weight: 500; }
+.ca-convert-val { font-family: var(--font-mono); font-size: 12px; color: var(--green); font-weight: 500; }
 .ca-convert-val.empty { color: var(--text-dim); opacity: 0.4; }
 
-.quick-input-row { display: flex; align-items: center; gap: 5px; }
-.quick-label { font-size: 11px; color: var(--text-dim); width: 52px; flex-shrink: 0; }
+.quick-input-row { display: flex; align-items: center; gap: 4px; }
+.quick-label { font-size: 11px; color: var(--text-dim); width: 50px; flex-shrink: 0; }
 .quick-input {
   flex: 1; background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
-  padding: 4px 6px; color: var(--text); font-family: var(--font-mono); font-size: 16px; outline: none;
-  transition: border-color 0.15s;
+  padding: 3px 5px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
+  outline: none; transition: border-color 0.15s;
 }
 .quick-input:focus { border-color: var(--accent); }
-.quick-input::placeholder { color: var(--text-dim); opacity: 0.45; font-size: 13px; }
+.quick-input::placeholder { color: var(--text-dim); opacity: 0.45; font-size: 11px; }
 .unit-label { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
 
 .slot-countdown {
-  margin-top: 6px; font-family: var(--font-mono); font-size: var(--sz-sm);
-  color: var(--accent); text-align: center; letter-spacing: 0.04em; min-height: 18px;
+  margin-top: 5px; font-family: var(--font-mono); font-size: 11px;
+  color: var(--accent); text-align: center; letter-spacing: 0.03em; min-height: 16px;
 }
 .slot-countdown.done  { color: var(--green); }
 .slot-countdown.empty { color: transparent; }
 
 .slot-memo {
-  width: 100%; margin-top: 6px;
+  width: 100%; margin-top: 5px;
   background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
-  padding: 4px 7px; color: var(--text); font-family: var(--font-main); font-size: 16px;
+  padding: 3px 6px; color: var(--text); font-family: var(--font-main); font-size: 16px;
   outline: none; resize: none; transition: border-color 0.15s;
 }
 .slot-memo:focus { border-color: var(--accent); }
 .slot-memo::placeholder { color: var(--text-dim); opacity: 0.45; }
 
-.slot-btn-row { display: flex; gap: 6px; margin-top: 7px; }
+.slot-btn-row { display: flex; gap: 5px; margin-top: 5px; }
 .reset-btn {
-  flex: 1; padding: 4px 0; background: none; border: 1px solid var(--border); border-radius: 4px;
+  flex: 1; padding: 3px 0; background: none; border: 1px solid var(--border); border-radius: 4px;
   color: var(--text-dim); font-size: 11px; font-family: var(--font-main); cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
 .reset-btn:hover { border-color: var(--r3-color); color: var(--r3-color); }
 .reset-btn.memo:hover { border-color: var(--accent); color: var(--accent); }
 
-/* BP警告 */
 .bp-warn {
   display: none; font-size: var(--sz-sm); color: var(--r3-color); margin-bottom: 8px;
-  padding: 6px 8px; background: rgba(232,152,120,0.08); border-radius: 5px;
+  padding: 5px 8px; background: rgba(232,152,120,0.08); border-radius: 5px;
   border: 1px solid rgba(232,152,120,0.3);
 }
 
-/* 合計ポイント */
+/* ============================================================ 現在ポイント & リワード */
+.current-pts-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.current-pts-input {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 5px;
+  padding: 6px 10px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
+  width: 130px; outline: none; transition: border-color 0.15s;
+}
+.current-pts-input:focus { border-color: var(--accent); }
+.current-pts-input::placeholder { color: var(--text-dim); opacity: 0.5; font-size: var(--sz-sm); }
+.pts-unit-btn {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text-dim); font-family: var(--font-mono); font-size: var(--sz-base);
+  padding: 6px 10px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.pts-unit-btn.active-k { color: var(--accent); border-color: var(--accent); background: var(--surface2); }
+.pts-unit-btn.active-m { color: var(--r3-color); border-color: var(--r3-color); background: var(--surface2); }
+.pts-label { font-size: var(--sz-sm); color: var(--text-dim); }
+
+.reward-rows { display: flex; flex-direction: column; gap: 8px; }
+.reward-row  { display: flex; align-items: center; gap: 8px; }
+.reward-row-label { font-size: var(--sz-sm); font-weight: 700; width: 26px; flex-shrink: 0; }
+.reward-row-label.r1 { color: var(--r1-color); }
+.reward-row-label.r2 { color: var(--r2-color); }
+.reward-row-label.r3 { color: var(--r3-color); }
+.reward-threshold { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--text-dim); width: 50px; flex-shrink: 0; text-align: right; }
+.reward-bar-track { flex: 1; height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.reward-bar-fill  { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+.reward-bar-fill.r1 { background: var(--r1-color); }
+.reward-bar-fill.r2 { background: var(--r2-color); }
+.reward-bar-fill.r3 { background: var(--r3-color); }
+.reward-remain { font-family: var(--font-mono); font-size: var(--sz-sm); width: 78px; text-align: right; flex-shrink: 0; }
+.reward-remain.r1 { color: var(--r1-color); }
+.reward-remain.r2 { color: var(--r2-color); }
+.reward-remain.r3 { color: var(--r3-color); }
+.reward-remain.achieved { color: var(--green); }
+
+/* ============================================================ タスク一覧（折りたたみ） */
+.task-group-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--highlight-border);
+  background: var(--highlight);
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: var(--sz-sm);
+  font-weight: 700;
+  margin-bottom: 3px;
+  text-align: left;
+  transition: background 0.15s;
+}
+.task-group-toggle:hover { background: rgba(200,184,232,0.2); }
+.task-group-meta { font-size: 11px; font-weight: 400; color: var(--accent2); margin-left: 5px; font-family: var(--font-mono); }
+.task-group-arrow { flex-shrink: 0; margin-left: 6px; }
+.task-group-items { display: none; margin-bottom: 3px; }
+.task-group-items.open { display: block; }
+
+.task-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 4px; border-top: 1px solid rgba(58,58,68,0.5); font-size: var(--sz-sm);
+}
+.task-pts { font-family: var(--font-mono); color: var(--green); font-size: var(--sz-sm); flex-shrink: 0; margin-left: 8px; }
+
+/* ============================================================ 加速逆算 */
+.accel-row {
+  display: flex; align-items: center; gap: 7px; padding: 7px 9px;
+  background: var(--surface2); border-radius: 5px; border: 1px solid var(--border);
+  flex-wrap: wrap; margin-bottom: 5px;
+}
+.accel-task-label { font-size: var(--sz-sm); color: var(--text); flex: 1; min-width: 100px; }
+.accel-pts-label  { font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--green); flex-shrink: 0; }
+.accel-target-select {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 7px; color: var(--text); font-family: var(--font-mono); font-size: var(--sz-sm);
+  outline: none; cursor: pointer; appearance: none; width: 50px; text-align: center;
+}
+.accel-result { font-family: var(--font-mono); font-size: var(--sz-lg); color: var(--green); font-weight: 500; }
+.accel-result.achieved { color: var(--r1-color); }
+.no-task { font-size: var(--sz-sm); color: var(--text-dim); padding: 5px 3px; font-style: italic; }
+
+/* ============================================================ 孵化逆算 */
+.hatch-row {
+  display: flex; align-items: center; gap: 7px; padding: 7px 9px;
+  background: var(--surface2); border-radius: 5px; border: 1px solid var(--border); flex-wrap: wrap;
+}
+.hatch-select, .hatch-target-select {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 7px; color: var(--text); font-family: var(--font-mono); font-size: var(--sz-sm);
+  outline: none; cursor: pointer; appearance: none;
+}
+.hatch-select { flex: 1; min-width: 130px; }
+.hatch-target-select { width: 50px; }
+.hatch-result { font-family: var(--font-mono); font-size: var(--sz-lg); color: var(--green); font-weight: 500; }
+.hatch-result.achieved { color: var(--r1-color); }
+
+/* ============================================================ 合計 */
 .total-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
 }
-.total-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 6px 0; }
+.total-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 4px 0; }
 .total-label { font-size: var(--sz-sm); color: var(--text-dim); }
-.total-num { font-family: var(--font-mono); font-size: 26px; color: var(--text-bright); font-weight: 700; }
+.total-num { font-family: var(--font-mono); font-size: 24px; color: var(--text-bright); font-weight: 700; }
 .total-note { text-align: center; font-size: var(--sz-sm); color: var(--text-dim); margin-top: 2px; }
 
-/* バージョン */
+/* ============================================================ バージョン */
 .version-label {
   position: fixed; bottom: 8px; left: 12px; font-size: var(--sz-sm);
   color: var(--text-dim); opacity: 0.5; pointer-events: none; font-family: var(--font-main);
@@ -366,16 +426,19 @@ body {
 /* ============================================================ スマホ */
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
-  .col-left, .col-right { display: none; border: none; }
-  .col-center { padding: 12px 12px 60px; }
+  .col-left, .col-mid { display: none; border: none; }
+  .col-right { padding: 12px 12px 60px; }
   .mob-tabs { display: flex; }
   .slot-bar-tasks { display: none; }
-  .layout.show-left  .col-left   { display: block; }
-  .layout.show-left  .col-center { display: none; }
-  .layout.show-left  .col-right  { display: none; }
-  .layout.show-right .col-right  { display: block; }
-  .layout.show-right .col-center { display: none; }
-  .layout.show-right .col-left   { display: none; }
+  .layout.show-left  .col-left  { display: block; }
+  .layout.show-left  .col-mid   { display: none; }
+  .layout.show-left  .col-right { display: none; }
+  .layout.show-mid   .col-mid   { display: block; }
+  .layout.show-mid   .col-left  { display: none; }
+  .layout.show-mid   .col-right { display: none; }
+  .layout.show-right .col-right { display: flex; flex-direction: column; }
+  .layout.show-right .col-left  { display: none; }
+  .layout.show-right .col-mid   { display: none; }
 }
 </style>
 </head>
@@ -383,14 +446,18 @@ body {
 
 <!-- ヘッダー -->
 <div class="header">
-  <span class="header-icon">🐈‍⬛</span>
-  <div>
-    <div class="header-title">Colony Action Tool</div>
-    <div class="header-name">[simulator]</div>
+  <div class="header-left">
+    <span class="header-icon">🐈‍⬛</span>
+    <div>
+      <div class="header-title">Colony Action Tool</div>
+      <div class="header-name">[simulator]</div>
+    </div>
   </div>
-  <div class="header-clock">
-    <div class="clock-time" id="clock-time">--:--</div>
-    <div class="clock-day"  id="clock-day">--</div>
+  <div class="header-right">
+    <div class="clock-wrap">
+      <div class="clock-time" id="clock-time">--:--</div>
+      <div class="clock-day"  id="clock-day">--</div>
+    </div>
   </div>
 </div>
 
@@ -402,9 +469,9 @@ body {
 
 <!-- スマホタブバー -->
 <div class="mob-tabs">
-  <button class="mob-tab" onclick="switchMobTab('left')">建築</button>
-  <button class="mob-tab active" onclick="switchMobTab('center')">計算</button>
-  <button class="mob-tab" onclick="switchMobTab('right')">進化/兵隊</button>
+  <button class="mob-tab" onclick="switchMobTab('left')">建築1〜4</button>
+  <button class="mob-tab" onclick="switchMobTab('mid')">建築5〜7+進化</button>
+  <button class="mob-tab active" onclick="switchMobTab('right')">計算</button>
 </div>
 
 <!-- スロット情報バー -->
@@ -417,18 +484,45 @@ body {
 <!-- 3列レイアウト -->
 <div class="layout" id="layout">
 
-  <!-- 左列：建築スロット -->
+  <!-- 左列：建築1〜4 -->
   <div class="col-left" id="col-left">
-    <div class="panel-title">☽ 建築</div>
-    <div class="bp-warn" id="bp-warn">⚠ このスロットは建築戦闘力+1がありません。建築BPはCAポイントになりません。</div>
-    <div id="build-slots"></div>
+    <div class="panel-title">
+      <span>☽ 建築 1〜4</span>
+    </div>
+    <div class="bulk-btn-row">
+      <button class="bulk-btn" onclick="bulkCopy('left')">左列まとめてコピー</button>
+      <button class="bulk-btn paste" onclick="bulkPaste('left')">ペースト</button>
+    </div>
+    <div class="bp-warn" id="bp-warn-left">⚠ このスロットは建築戦闘力+1がありません</div>
+    <div id="build-slots-left"></div>
   </div>
 
-  <!-- 中央：CA計算 -->
-  <div class="col-center" id="col-center">
+  <!-- 中央列：建築5〜7 + 進化1 -->
+  <div class="col-mid" id="col-mid">
+    <div class="panel-title">
+      <span>☽ 建築 5〜7 + 進化</span>
+    </div>
+    <div class="bulk-btn-row">
+      <button class="bulk-btn" onclick="bulkCopy('mid')">中列まとめてコピー</button>
+      <button class="bulk-btn paste" onclick="bulkPaste('mid')">ペースト</button>
+    </div>
+    <div class="bp-warn" id="bp-warn-mid">⚠ このスロットは建築戦闘力+1がありません</div>
+    <div id="build-slots-mid"></div>
+    <div class="panel-title" style="margin-top:14px;">☽ 進化</div>
+    <div id="evo-slots"></div>
+  </div>
+
+  <!-- 右列：CA計算 -->
+  <div class="col-right" id="col-right">
+
+    <!-- 現在スロット タスク一覧 -->
+    <div class="calc-card">
+      <div class="card-title">☽ 現在スロット タスク</div>
+      <div id="slot-tasks-detail"><div class="no-task">DBを読み込んでいます...</div></div>
+    </div>
 
     <!-- 現在ポイント & リワード -->
-    <div class="reward-card">
+    <div class="calc-card">
       <div class="card-title">☽ 現在ポイント & リワード</div>
       <div class="current-pts-row">
         <input class="current-pts-input" id="current-pts" type="number" min="0" step="any" placeholder="現在pt" oninput="onCurrentPtsInput()">
@@ -460,13 +554,13 @@ body {
     <!-- 加速逆算 -->
     <div class="calc-card">
       <div class="card-title">☽ 加速逆算</div>
-      <div id="accel-rows"><div class="no-accel">現在のスロットに加速タスクがありません</div></div>
+      <div id="accel-rows"><div class="no-task">現在のスロットに加速タスクがありません</div></div>
     </div>
 
     <!-- 孵化逆算 -->
     <div class="calc-card">
       <div class="card-title">☽ 孵化逆算</div>
-      <div id="hatch-rows"><div class="no-hatch">現在のスロットに孵化タスクがありません</div></div>
+      <div id="hatch-rows"><div class="no-task">現在のスロットに孵化タスクがありません</div></div>
     </div>
 
     <!-- 合計ポイント -->
@@ -481,46 +575,30 @@ body {
     </div>
 
   </div>
-
-  <!-- 右列：進化・兵隊アリ -->
-  <div class="col-right" id="col-right">
-    <div class="panel-title">☽ 進化</div>
-    <div id="evo-slots"></div>
-    <div class="panel-title" style="margin-top:14px;">☽ 兵隊アリ</div>
-    <div id="hatch-slots"></div>
-  </div>
-
 </div>
 
-<div class="version-label">Mar 17 '26 🐈‍⬛ v0.1</div>
+<div class="version-label">Mar 19 '26 🐈‍⬛ v0.2</div>
 
 <script>
 // ============================================================
-// 定数
+// 定数・状態
 // ============================================================
 const DB_PATH = 'ca_database.json';
 const ACCEL_KW = '加速アイテム時間が1分毎に';
 const HATCH_PAT = /レベル(\d+)兵隊アリを1匹孵化する/;
 const DAY_LABELS = ['日','月','火','水','木','金','土'];
 
-const BUILD_COUNT = 8;
+// 左列：建築1〜4（インデックス0〜3）
+const LEFT_BUILD  = [0,1,2,3];
+// 中列：建築5〜7（インデックス4〜6）
+const MID_BUILD   = [4,5,6];
 const EVO_COUNT   = 1;
-const HATCH_SLOTS = [
-  { key: 'guardian', label: 'ガーディアン' },
-  { key: 'shooter',  label: 'シューター' },
-  { key: 'carrier',  label: 'キャリヤー' },
-  { key: 'mutant',   label: '兵隊アリ異変' },
-  { key: 'enhance',  label: '兵隊アリ強化' },
-];
 
-// ============================================================
-// 状態
-// ============================================================
 let db = null;
 let currentSlot = null;
 let currentPage = 0;
 let ptsUnit = 'K';
-let mobTab = 'center';
+let mobTab = 'right';
 
 // ============================================================
 // フォーマット
@@ -530,6 +608,7 @@ function fmtNum(n) {
   if (n >= 1000)    return (n/1000).toFixed(1).replace(/\.?0+$/,'')+'K';
   return n.toLocaleString();
 }
+function fmtPts(n) { return fmtNum(n); }
 function fmtMins(mins) {
   if (mins < 60) return mins+'分';
   if (mins < 1440) { const h=Math.floor(mins/60),m=mins%60; return m>0?`${h}時間${m}分`:`${h}時間`; }
@@ -576,22 +655,110 @@ function updateClock() {
 }
 
 // ============================================================
+// タスクグループ化
+// ============================================================
+function classifyTask(label) {
+  if (/中立生物.*星.*UP/.test(label)) return 'neutral';
+  if (/特化アリ.*星.*UP/.test(label)) return 'special';
+  if (/細菌/.test(label)) return 'bacteria';
+  if (/細胞/.test(label)) return 'cell';
+  if (/遺伝/.test(label) || /DNA/.test(label)) return 'gene';
+  if (/菌糸|真菌|生命エッセンス/.test(label)) return 'fungi';
+  return 'single';
+}
+
+function buildTaskGroupSummary(category, tasks) {
+  const pts = tasks.map(t => t.points);
+  const minPt = Math.min(...pts), maxPt = Math.max(...pts);
+  const ptRange = minPt === maxPt ? fmtPts(minPt) : `${fmtPts(minPt)}〜${fmtPts(maxPt)}`;
+  const count = tasks.length;
+  const LABELS = { neutral:'中立生物', special:'特化アリ', bacteria:'細菌', cell:'細胞', gene:'遺伝子/DNA', fungi:'真菌' };
+  if (category === 'neutral') {
+    const stars = tasks.map(t => { const m = t.label.match(/(\d+)星/); return m ? parseInt(m[1]) : null; }).filter(n=>n!==null).sort((a,b)=>a-b);
+    const starRange = stars.length >= 2 ? `星${stars[0]}〜${stars[stars.length-1]}` : stars.length===1 ? `星${stars[0]}` : '';
+    return { label: `中立生物${starRange?' '+starRange:''}（${count}種）`, meta: `${ptRange}pt` };
+  }
+  if (LABELS[category]) return { label: `${LABELS[category]}（${count}種）`, meta: `${ptRange}pt` };
+  return { label: tasks[0].label, meta: `${ptRange}pt` };
+}
+
+let taskGroupCounter = 0;
+
+function renderSlotTasksDetail(slot) {
+  const el = document.getElementById('slot-tasks-detail');
+  if (!slot) { el.innerHTML = '<div class="no-task">スロット情報なし</div>'; return; }
+
+  taskGroupCounter = 0;
+  // タスクをカテゴリ別にグループ化
+  const groups = {};
+  const singles = [];
+  slot.tasks.forEach(task => {
+    const cat = classifyTask(task.label);
+    if (cat === 'single') {
+      singles.push(task);
+    } else {
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(task);
+    }
+  });
+
+  let html = '';
+
+  // シングルタスクはそのまま表示
+  singles.forEach(task => {
+    html += `<div class="task-row"><span>${task.label}</span><span class="task-pts">${fmtPts(task.points)}pt</span></div>`;
+  });
+
+  // グループタスクは折りたたみ表示
+  Object.entries(groups).forEach(([cat, tasks]) => {
+    if (tasks.length === 1) {
+      html += `<div class="task-row"><span>${tasks[0].label}</span><span class="task-pts">${fmtPts(tasks[0].points)}pt</span></div>`;
+      return;
+    }
+    const summary = buildTaskGroupSummary(cat, tasks);
+    const gid = taskGroupCounter++;
+    html += `<button class="task-group-toggle" onclick="toggleTaskGroup(${gid})">
+      <span><span>${summary.label}</span><span class="task-group-meta">${summary.meta}</span></span>
+      <span class="task-group-arrow" id="tga-${gid}">▼</span>
+    </button>`;
+    html += `<div class="task-group-items" id="tgi-${gid}">`;
+    tasks.forEach(task => {
+      html += `<div class="task-row"><span>${task.label}</span><span class="task-pts">${fmtPts(task.points)}pt</span></div>`;
+    });
+    html += `</div>`;
+  });
+
+  el.innerHTML = html || '<div class="no-task">タスクなし</div>';
+}
+
+function toggleTaskGroup(gid) {
+  const items = document.getElementById(`tgi-${gid}`);
+  const arrow = document.getElementById(`tga-${gid}`);
+  if (items.classList.toggle('open')) {
+    arrow.textContent = '▲';
+  } else {
+    arrow.textContent = '▼';
+  }
+}
+
+// ============================================================
 // スロット情報バー
 // ============================================================
 function updateSlotBar() {
   currentSlot = getCurrentSlotData();
   if (!currentSlot) return;
   const h = parseInt(currentSlot.times[0].split(':')[0]);
-  document.getElementById('slot-event').textContent   = currentSlot.event;
+  document.getElementById('slot-event').textContent    = currentSlot.event;
   document.getElementById('slot-time-bar').textContent = currentSlot.times[0]+'〜'+String((h+1)%24).padStart(2,'0')+':00';
   const tasksEl = document.getElementById('slot-tasks');
   tasksEl.innerHTML = '';
-  currentSlot.tasks.forEach(t => {
+  currentSlot.tasks.slice(0,4).forEach(t => {
     const c = document.createElement('div');
     c.className = 'slot-task-chip';
     c.innerHTML = `<span>${t.label}</span><span class="chip-pts">${fmtNum(t.points)}pt</span>`;
     tasksEl.appendChild(c);
   });
+  renderSlotTasksDetail(currentSlot);
   updateRewardThresholds();
   updateAccelSection();
   updateHatchSection();
@@ -618,14 +785,14 @@ function getThresholds() {
 }
 
 // ============================================================
-// 加速逆算セクション
+// 加速逆算
 // ============================================================
 function updateAccelSection() {
   if (!currentSlot) return;
   const tasks = currentSlot.tasks.filter(t => t.label.includes(ACCEL_KW));
   const el = document.getElementById('accel-rows');
   el.innerHTML = '';
-  if (!tasks.length) { el.innerHTML = '<div class="no-accel">現在のスロットに加速タスクがありません</div>'; return; }
+  if (!tasks.length) { el.innerHTML = '<div class="no-task">現在のスロットに加速タスクがありません</div>'; return; }
   tasks.forEach((task, i) => {
     const row = document.createElement('div');
     row.className = 'accel-row';
@@ -642,14 +809,14 @@ function updateAccelSection() {
 }
 
 // ============================================================
-// 孵化逆算セクション
+// 孵化逆算
 // ============================================================
 function updateHatchSection() {
   if (!currentSlot) return;
   const tasks = currentSlot.tasks.filter(t => HATCH_PAT.test(t.label));
   const el = document.getElementById('hatch-rows');
   el.innerHTML = '';
-  if (!tasks.length) { el.innerHTML = '<div class="no-hatch">現在のスロットに孵化タスクがありません</div>'; return; }
+  if (!tasks.length) { el.innerHTML = '<div class="no-task">現在のスロットに孵化タスクがありません</div>'; return; }
   const options = tasks.map(t => {
     const m = t.label.match(/レベル(\d+)/);
     return `<option value="${t.points}">Lv${m?m[1]:'?'}（${t.points}pt/匹）</option>`;
@@ -676,8 +843,11 @@ function getBpTaskPts() {
   return t ? t.points : 0;
 }
 function updateBpWarn() {
-  const el = document.getElementById('bp-warn');
-  if (el) el.style.display = getBpTaskPts() > 0 ? 'none' : 'block';
+  const show = getBpTaskPts() === 0;
+  ['left','mid'].forEach(col => {
+    const el = document.getElementById(`bp-warn-${col}`);
+    if (el) el.style.display = show ? 'block' : 'none';
+  });
 }
 function setUnitBtn(id, unit) {
   const btn = document.getElementById(id);
@@ -685,13 +855,12 @@ function setUnitBtn(id, unit) {
   btn.textContent = unit;
   btn.className = 'bp-unit-btn ' + (unit==='M'?'active-m':'active-k');
 }
-function toggleBpUnit(id, otherId, slotKey) {
-  const btn = document.getElementById(id);
+function toggleBpUnit(curId, newId) {
+  const btn = document.getElementById(curId);
   const newUnit = btn.textContent === 'K' ? 'M' : 'K';
-  setUnitBtn(id, newUnit);
-  setUnitBtn(otherId, newUnit);
-  calcAll();
-  saveAllSlots();
+  setUnitBtn(curId, newUnit);
+  setUnitBtn(newId, newUnit);
+  calcAll(); saveAllSlots();
 }
 function getBpVal(numId, unitId) {
   const num  = parseFloat(document.getElementById(numId)?.value) || 0;
@@ -700,68 +869,49 @@ function getBpVal(numId, unitId) {
 }
 
 // ============================================================
-// 現在ポイントK/Mトグル
+// 現在ポイント K/Mトグル
 // ============================================================
 function togglePtsUnit() {
   ptsUnit = ptsUnit==='K' ? 'M' : 'K';
   const btn = document.getElementById('pts-unit-btn');
   btn.textContent = ptsUnit;
   btn.className = 'pts-unit-btn '+(ptsUnit==='M'?'active-m':'active-k');
-  saveCurrentPts();
-  calcAll();
+  saveCurrentPts(); calcAll();
 }
 function getCurrentPts() {
   const num = parseFloat(document.getElementById('current-pts').value) || 0;
   return ptsUnit==='M' ? Math.round(num*1000000) : Math.round(num*1000);
 }
+function onCurrentPtsInput() { saveCurrentPts(); calcAll(); }
 
 // ============================================================
-// カウントダウン共通
+// カウントダウン
 // ============================================================
-function fmtCountdown(daysVal, hourVal, minVal, startKey) {
-  const totalSecs = daysVal*86400 + hourVal*3600 + minVal*60;
-  if (totalSecs <= 0) return { text: '', cls: 'slot-countdown empty' };
-  let startTime;
-  try {
-    const stored = localStorage.getItem(startKey);
-    const savedRaw = localStorage.getItem(startKey+'_total');
-    const savedTotal = savedRaw ? parseInt(savedRaw) : 0;
-    if (stored && savedTotal === totalSecs) {
-      startTime = parseInt(stored);
-    } else {
-      startTime = Date.now();
-      localStorage.setItem(startKey, startTime);
-      localStorage.setItem(startKey+'_total', totalSecs);
-    }
-  } catch(e) { startTime = Date.now(); }
-  const elapsed   = Math.floor((Date.now() - startTime) / 1000);
-  const remaining = Math.max(0, totalSecs - elapsed);
-  if (remaining === 0) return { text: '完成', cls: 'slot-countdown done' };
-  const dd = Math.floor(remaining/86400);
-  const hh = Math.floor((remaining%86400)/3600);
-  const mm = Math.floor((remaining%3600)/60);
-  const ss = remaining%60;
-  let text = '残 ';
-  if (dd>0) text += `${dd}日 `;
-  text += `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-  const finishTime = new Date(startTime + totalSecs*1000);
-  const mo = finishTime.getMonth()+1, d = finishTime.getDate();
-  const dw = DAY_LABELS[finishTime.getDay()];
-  const fh = String(finishTime.getHours()).padStart(2,'0');
-  const fm = String(finishTime.getMinutes()).padStart(2,'0');
-  text += `　完成：${mo}/${d}(${dw}) ${fh}:${fm}`;
-  return { text, cls: 'slot-countdown' };
-}
-
 function updateCountdown(cdId, daysId, hourId, minId, startKey) {
   const d = parseInt(document.getElementById(daysId)?.value)||0;
   const h = parseInt(document.getElementById(hourId)?.value)||0;
   const m = parseInt(document.getElementById(minId)?.value)||0;
   const cdEl = document.getElementById(cdId);
   if (!cdEl) return;
-  const r = fmtCountdown(d,h,m,startKey);
-  cdEl.textContent = r.text;
-  cdEl.className   = r.cls;
+  const totalSecs = d*86400 + h*3600 + m*60;
+  if (totalSecs <= 0) { cdEl.textContent=''; cdEl.className='slot-countdown empty'; return; }
+  let startTime;
+  try {
+    const stored = localStorage.getItem(startKey);
+    const savedTotal = parseInt(localStorage.getItem(startKey+'_total')||'0');
+    if (stored && savedTotal === totalSecs) { startTime = parseInt(stored); }
+    else { startTime = Date.now(); localStorage.setItem(startKey, startTime); localStorage.setItem(startKey+'_total', totalSecs); }
+  } catch(e) { startTime = Date.now(); }
+  const remaining = Math.max(0, totalSecs - Math.floor((Date.now()-startTime)/1000));
+  if (remaining === 0) { cdEl.textContent='完成'; cdEl.className='slot-countdown done'; return; }
+  const dd=Math.floor(remaining/86400), hh=Math.floor((remaining%86400)/3600);
+  const mm=Math.floor((remaining%3600)/60), ss=remaining%60;
+  let text='残 '; if(dd>0)text+=`${dd}日 `;
+  text+=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  const ft=new Date(startTime+totalSecs*1000);
+  const mo=ft.getMonth()+1, fd=ft.getDate(), dw=DAY_LABELS[ft.getDay()];
+  text+=`　完成：${mo}/${fd}(${dw}) ${String(ft.getHours()).padStart(2,'0')}:${String(ft.getMinutes()).padStart(2,'0')}`;
+  cdEl.textContent=text; cdEl.className='slot-countdown';
 }
 
 function onQuickInput(quickId, daysId, hourId, minId, startKey) {
@@ -779,8 +929,8 @@ function onQuickInput(quickId, daysId, hourId, minId, startKey) {
 // ============================================================
 // スロットHTML生成：建築
 // ============================================================
-function buildBuildSlot(i) {
-  const k = `b${i}`;
+function buildBuildSlotHTML(i) {
+  const sk = `cat_s_p${currentPage}_b${i}`;
   return `
     <div class="slot-card" id="bcard-${i}">
       <div class="slot-header">
@@ -813,15 +963,15 @@ function buildBuildSlot(i) {
         </div>
         <div class="quick-input-row">
           <span class="quick-label">残り時間</span>
-          <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','cat_b${currentPage}_${i}');onBuildInput(${i})">
+          <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','${sk}');onBuildInput(${i})">
         </div>
         <div class="field-row">
           <span class="field-label"></span>
-          <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:44px;flex:none;" oninput="saveAllSlots()">
+          <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
           <span class="unit-label">日</span>
-          <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
           <span class="unit-label">時</span>
-          <input class="bp-num-input" id="bmin-${i}"  type="number" min="0" max="59" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <input class="bp-num-input" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
           <span class="unit-label">分</span>
         </div>
       </div>
@@ -837,14 +987,10 @@ function buildBuildSlot(i) {
 // ============================================================
 // スロットHTML生成：進化
 // ============================================================
-function buildEvoSlot(i) {
+function buildEvoSlotHTML(i) {
+  const sk = `cat_s_p${currentPage}_e${i}`;
   return `
     <div class="slot-card">
-      <div class="slot-header">
-        <input type="checkbox" class="slot-checkbox" id="echeck-${i}" onchange="calcAll()">
-        <span class="slot-label-text">進化${i+1}</span>
-        <span class="slot-ca-pts empty" id="eca-${i}">— pt</span>
-      </div>
       <div class="slot-fields">
         <div class="field-row">
           <span class="field-label">現在BP</span>
@@ -866,15 +1012,15 @@ function buildEvoSlot(i) {
         </div>
         <div class="quick-input-row">
           <span class="quick-label">残り時間</span>
-          <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','cat_e${currentPage}_${i}');saveAllSlots()">
+          <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','${sk}');saveAllSlots()">
         </div>
         <div class="field-row">
           <span class="field-label"></span>
-          <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:44px;flex:none;" oninput="saveAllSlots()">
+          <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
           <span class="unit-label">日</span>
-          <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
           <span class="unit-label">時</span>
-          <input class="bp-num-input" id="emin-${i}"  type="number" min="0" max="59" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
+          <input class="bp-num-input" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
           <span class="unit-label">分</span>
         </div>
       </div>
@@ -888,55 +1034,24 @@ function buildEvoSlot(i) {
 }
 
 // ============================================================
-// スロットHTML生成：兵隊アリ
-// ============================================================
-function buildHatchSlot(slotDef) {
-  const k = slotDef.key;
-  return `
-    <div class="slot-card">
-      <div class="slot-label-text" style="margin-bottom:8px;font-size:var(--sz-sm);font-weight:700;color:var(--text-dim);">${slotDef.label}</div>
-      <div class="quick-input-row">
-        <span class="quick-label">残り時間</span>
-        <input class="quick-input" id="hquick-${k}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('hquick-${k}','hdays-${k}','hhour-${k}','hmin-${k}','cat_h${currentPage}_${k}');saveAllSlots()">
-      </div>
-      <div class="field-row" style="margin-top:4px;">
-        <span class="field-label"></span>
-        <input class="bp-num-input" id="hdays-${k}" type="number" min="0" step="1" placeholder="0" style="width:44px;flex:none;" oninput="saveAllSlots()">
-        <span class="unit-label">日</span>
-        <input class="bp-num-input" id="hhour-${k}" type="number" min="0" max="23" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
-        <span class="unit-label">時</span>
-        <input class="bp-num-input" id="hmin-${k}"  type="number" min="0" max="59" step="1" placeholder="0" style="width:40px;flex:none;" oninput="saveAllSlots()">
-        <span class="unit-label">分</span>
-      </div>
-      <div class="slot-countdown empty" id="hcd-${k}">—</div>
-      <textarea class="slot-memo" id="hmemo-${k}" rows="2" placeholder="メモ" oninput="saveAllSlots()"></textarea>
-      <div class="slot-btn-row">
-        <button class="reset-btn" onclick="resetHatchSlot('${k}')">リセット</button>
-        <button class="reset-btn memo" onclick="resetMemo('hmemo-${k}')">メモリセット</button>
-      </div>
-    </div>`;
-}
-
-// ============================================================
-// スロット計算：建築
+// スロット計算
 // ============================================================
 function onBuildInput(i) {
-  const cur = getBpVal(`bcur-${i}`, `bcur-u-${i}`);
-  const nw  = getBpVal(`bnew-${i}`, `bnew-u-${i}`);
+  const cur = getBpVal(`bcur-${i}`,`bcur-u-${i}`);
+  const nw  = getBpVal(`bnew-${i}`,`bnew-u-${i}`);
   const diffEl  = document.getElementById(`bdiff-${i}`);
   const caValEl = document.getElementById(`bcaval-${i}`);
   const caEl    = document.getElementById(`bca-${i}`);
   const cardEl  = document.getElementById(`bcard-${i}`);
-  const checked = document.getElementById(`bcheck-${i}`).checked;
+  const checked = document.getElementById(`bcheck-${i}`)?.checked;
   if (cur>0 && nw>cur) {
     const diff = Math.round(nw-cur);
-    diffEl.textContent = '+'+fmtNum(diff);
-    diffEl.classList.remove('empty');
+    diffEl.textContent = '+'+fmtNum(diff); diffEl.classList.remove('empty');
     const ptPerBp = getBpTaskPts();
     if (ptPerBp>0) {
       const ca = diff*ptPerBp;
-      caEl.textContent = fmtNum(ca)+' pt'; caEl.classList.remove('empty');
-      caValEl.textContent = fmtNum(ca)+' pt'; caValEl.className = 'ca-convert-val';
+      caEl.textContent=fmtNum(ca)+' pt'; caEl.classList.remove('empty');
+      caValEl.textContent=fmtNum(ca)+' pt'; caValEl.className='ca-convert-val';
     } else {
       caEl.textContent='— pt'; caEl.classList.add('empty');
       caValEl.textContent='このスロットでは加算されません'; caValEl.className='ca-convert-val empty';
@@ -946,52 +1061,19 @@ function onBuildInput(i) {
     caEl.textContent='— pt'; caEl.classList.add('empty');
     caValEl.textContent='—'; caValEl.className='ca-convert-val empty';
   }
-  cardEl.classList.toggle('checked', checked);
+  if (cardEl) cardEl.classList.toggle('checked', !!checked);
   saveAllSlots(); calcAll();
 }
-
 function onBuildChange(i) { onBuildInput(i); }
 
-// ============================================================
-// スロット計算：進化
-// ============================================================
 function onEvoInput(i) {
-  const cur = getBpVal(`ecur-${i}`, `ecur-u-${i}`);
-  const nw  = getBpVal(`enew-${i}`, `enew-u-${i}`);
+  const cur = getBpVal(`ecur-${i}`,`ecur-u-${i}`);
+  const nw  = getBpVal(`enew-${i}`,`enew-u-${i}`);
   const diffEl = document.getElementById(`ediff-${i}`);
-  if (cur>0 && nw>cur) {
-    diffEl.textContent = '+'+fmtNum(Math.round(nw-cur));
-    diffEl.classList.remove('empty');
-  } else {
-    diffEl.textContent='—'; diffEl.classList.add('empty');
-  }
+  if (cur>0 && nw>cur) { diffEl.textContent='+'+fmtNum(Math.round(nw-cur)); diffEl.classList.remove('empty'); }
+  else { diffEl.textContent='—'; diffEl.classList.add('empty'); }
   saveAllSlots();
 }
-
-// ============================================================
-// リセット
-// ============================================================
-function resetBuildSlot(i) {
-  ['bcur','bnew'].forEach(f => document.getElementById(`${f}-${i}`).value='');
-  ['bdays','bhour','bmin','bquick'].forEach(f => document.getElementById(`${f}-${i}`).value='');
-  document.getElementById(`bcheck-${i}`).checked = false;
-  setUnitBtn(`bcur-u-${i}`,'K'); setUnitBtn(`bnew-u-${i}`,'K');
-  try { localStorage.removeItem(`cat_b${currentPage}_${i}`); localStorage.removeItem(`cat_b${currentPage}_${i}_total`); } catch(e){}
-  onBuildInput(i);
-}
-function resetEvoSlot(i) {
-  ['ecur','enew'].forEach(f => document.getElementById(`${f}-${i}`).value='');
-  ['edays','ehour','emin','equick'].forEach(f => document.getElementById(`${f}-${i}`).value='');
-  setUnitBtn(`ecur-u-${i}`,'K'); setUnitBtn(`enew-u-${i}`,'K');
-  try { localStorage.removeItem(`cat_e${currentPage}_${i}`); localStorage.removeItem(`cat_e${currentPage}_${i}_total`); } catch(e){}
-  onEvoInput(i); saveAllSlots();
-}
-function resetHatchSlot(k) {
-  ['hdays','hhour','hmin','hquick'].forEach(f => document.getElementById(`${f}-${k}`).value='');
-  try { localStorage.removeItem(`cat_h${currentPage}_${k}`); localStorage.removeItem(`cat_h${currentPage}_${k}_total`); } catch(e){}
-  saveAllSlots();
-}
-function resetMemo(id) { document.getElementById(id).value=''; saveAllSlots(); }
 
 // ============================================================
 // 全体計算
@@ -1008,10 +1090,9 @@ function calcAll() {
     if (remain===0) { el.textContent='達成'; el.className='reward-remain achieved'; }
     else { el.textContent=fmtNum(remain)+' pt'; el.className='reward-remain '+key; }
   });
-  // 加速逆算
   if (currentSlot) {
     const accelTasks = currentSlot.tasks.filter(t => t.label.includes(ACCEL_KW));
-    accelTasks.forEach((task, i) => {
+    accelTasks.forEach((task,i) => {
       const selEl = document.getElementById(`accel-target-${i}`);
       const resEl = document.getElementById(`accel-result-${i}`);
       if (!selEl||!resEl) return;
@@ -1019,26 +1100,24 @@ function calcAll() {
       if (remain===0) { resEl.textContent='達成済'; resEl.className='accel-result achieved'; }
       else { resEl.textContent=fmtMins(Math.ceil(remain/task.points)); resEl.className='accel-result'; }
     });
-    // 孵化逆算
-    const hLvEl = document.getElementById('hatch-level-sel');
-    const hTgEl = document.getElementById('hatch-target-sel');
-    const hRsEl = document.getElementById('hatch-result');
+    const hLvEl=document.getElementById('hatch-level-sel');
+    const hTgEl=document.getElementById('hatch-target-sel');
+    const hRsEl=document.getElementById('hatch-result');
     if (hLvEl&&hTgEl&&hRsEl) {
-      const hPts = parseInt(hLvEl.value)||0;
-      const remain = Math.max(0, th[hTgEl.value]-pts);
+      const hPts=parseInt(hLvEl.value)||0;
+      const remain=Math.max(0,th[hTgEl.value]-pts);
       if (remain===0) { hRsEl.textContent='達成済'; hRsEl.className='hatch-result achieved'; }
       else if (hPts>0) { hRsEl.textContent=fmtNum(Math.ceil(remain/hPts)); hRsEl.className='hatch-result'; }
     }
   }
-  // 建築合計
   let total=0, cnt=0;
-  for (let i=0; i<BUILD_COUNT; i++) {
-    if (!document.getElementById(`bcheck-${i}`)?.checked) continue;
-    const cur = getBpVal(`bcur-${i}`,`bcur-u-${i}`);
-    const nw  = getBpVal(`bnew-${i}`,`bnew-u-${i}`);
-    const ptPerBp = getBpTaskPts();
-    if (cur>0 && nw>cur && ptPerBp>0) { total += Math.round(nw-cur)*ptPerBp; cnt++; }
-  }
+  [...LEFT_BUILD,...MID_BUILD].forEach(i => {
+    if (!document.getElementById(`bcheck-${i}`)?.checked) return;
+    const cur=getBpVal(`bcur-${i}`,`bcur-u-${i}`);
+    const nw=getBpVal(`bnew-${i}`,`bnew-u-${i}`);
+    const ptPerBp=getBpTaskPts();
+    if (cur>0 && nw>cur && ptPerBp>0) { total+=Math.round(nw-cur)*ptPerBp; cnt++; }
+  });
   document.getElementById('total-num').textContent = fmtNum(total);
   document.getElementById('total-note').textContent = cnt>0
     ? `${cnt}スロット選択中 ／ 現在pt(${fmtNum(pts)}) + 建築(${fmtNum(total)}) = ${fmtNum(pts+total)} pt`
@@ -1047,16 +1126,143 @@ function calcAll() {
 }
 
 // ============================================================
+// リセット
+// ============================================================
+function resetBuildSlot(i) {
+  ['bcur','bnew'].forEach(f => { const el=document.getElementById(`${f}-${i}`); if(el) el.value=''; });
+  ['bdays','bhour','bmin','bquick'].forEach(f => { const el=document.getElementById(`${f}-${i}`); if(el) el.value=''; });
+  document.getElementById(`bcheck-${i}`).checked = false;
+  setUnitBtn(`bcur-u-${i}`,'K'); setUnitBtn(`bnew-u-${i}`,'K');
+  const sk = `cat_s_p${currentPage}_b${i}`;
+  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e){}
+  onBuildInput(i);
+}
+function resetEvoSlot(i) {
+  ['ecur','enew'].forEach(f => { const el=document.getElementById(`${f}-${i}`); if(el) el.value=''; });
+  ['edays','ehour','emin','equick'].forEach(f => { const el=document.getElementById(`${f}-${i}`); if(el) el.value=''; });
+  setUnitBtn(`ecur-u-${i}`,'K'); setUnitBtn(`enew-u-${i}`,'K');
+  const sk = `cat_s_p${currentPage}_e${i}`;
+  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e){}
+  onEvoInput(i); saveAllSlots();
+}
+function resetMemo(id) { const el=document.getElementById(id); if(el) el.value=''; saveAllSlots(); }
+
+// ============================================================
+// 一括コピペ
+// ============================================================
+function getBuildSlotData(i) {
+  return {
+    curNum:  document.getElementById(`bcur-${i}`)?.value||'',
+    curUnit: document.getElementById(`bcur-u-${i}`)?.textContent||'K',
+    newNum:  document.getElementById(`bnew-${i}`)?.value||'',
+    newUnit: document.getElementById(`bnew-u-${i}`)?.textContent||'K',
+    days:    document.getElementById(`bdays-${i}`)?.value||'',
+    hour:    document.getElementById(`bhour-${i}`)?.value||'',
+    min:     document.getElementById(`bmin-${i}`)?.value||'',
+    quick:   document.getElementById(`bquick-${i}`)?.value||'',
+    memo:    document.getElementById(`bmemo-${i}`)?.value||'',
+    checked: document.getElementById(`bcheck-${i}`)?.checked||false,
+  };
+}
+function getEvoSlotData(i) {
+  return {
+    curNum:  document.getElementById(`ecur-${i}`)?.value||'',
+    curUnit: document.getElementById(`ecur-u-${i}`)?.textContent||'K',
+    newNum:  document.getElementById(`enew-${i}`)?.value||'',
+    newUnit: document.getElementById(`enew-u-${i}`)?.textContent||'K',
+    days:    document.getElementById(`edays-${i}`)?.value||'',
+    hour:    document.getElementById(`ehour-${i}`)?.value||'',
+    min:     document.getElementById(`emin-${i}`)?.value||'',
+    quick:   document.getElementById(`equick-${i}`)?.value||'',
+    memo:    document.getElementById(`ememo-${i}`)?.value||'',
+  };
+}
+
+function bulkCopy(col) {
+  let data;
+  if (col === 'left') {
+    data = { type: 'cat_s_left', build: LEFT_BUILD.map(i => getBuildSlotData(i)) };
+  } else {
+    data = { type: 'cat_s_mid', build: MID_BUILD.map(i => getBuildSlotData(i)), evo: [getEvoSlotData(0)] };
+  }
+  const json = JSON.stringify(data);
+  navigator.clipboard.writeText(json).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピー完了';
+    setTimeout(() => btn.textContent = orig, 1500);
+  }).catch(() => alert('コピーに失敗しました。'));
+}
+
+function bulkPaste(col) {
+  navigator.clipboard.readText().then(text => {
+    try {
+      const data = JSON.parse(text);
+      if (col === 'left' && data.type === 'cat_s_left') {
+        (data.build||[]).forEach((d,idx) => {
+          const i = LEFT_BUILD[idx];
+          if (i === undefined) return;
+          applyBuildSlotData(i, d);
+        });
+      } else if (col === 'mid' && data.type === 'cat_s_mid') {
+        (data.build||[]).forEach((d,idx) => {
+          const i = MID_BUILD[idx];
+          if (i === undefined) return;
+          applyBuildSlotData(i, d);
+        });
+        (data.evo||[]).forEach((d,i) => applyEvoSlotData(i, d));
+      } else {
+        alert('この列のデータではありません。');
+        return;
+      }
+      saveAllSlots(); calcAll();
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = '✓ ペースト完了';
+      setTimeout(() => btn.textContent = orig, 1500);
+    } catch(e) { alert('ペーストに失敗しました。形式が正しくない可能性があります。'); }
+  }).catch(() => alert('クリップボードの読み取りに失敗しました。'));
+}
+
+function applyBuildSlotData(i, d) {
+  document.getElementById(`bcur-${i}`).value  = d.curNum||'';
+  document.getElementById(`bnew-${i}`).value  = d.newNum||'';
+  document.getElementById(`bdays-${i}`).value = d.days||'';
+  document.getElementById(`bhour-${i}`).value = d.hour||'';
+  document.getElementById(`bmin-${i}`).value  = d.min||'';
+  document.getElementById(`bquick-${i}`).value = d.quick||'';
+  document.getElementById(`bmemo-${i}`).value = d.memo||'';
+  document.getElementById(`bcheck-${i}`).checked = !!d.checked;
+  if (d.curUnit) setUnitBtn(`bcur-u-${i}`, d.curUnit);
+  if (d.newUnit) setUnitBtn(`bnew-u-${i}`, d.newUnit);
+  const sk = `cat_s_p${currentPage}_b${i}`;
+  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e){}
+  onBuildInput(i);
+}
+function applyEvoSlotData(i, d) {
+  document.getElementById(`ecur-${i}`).value  = d.curNum||'';
+  document.getElementById(`enew-${i}`).value  = d.newNum||'';
+  document.getElementById(`edays-${i}`).value = d.days||'';
+  document.getElementById(`ehour-${i}`).value = d.hour||'';
+  document.getElementById(`emin-${i}`).value  = d.min||'';
+  document.getElementById(`equick-${i}`).value = d.quick||'';
+  document.getElementById(`ememo-${i}`).value = d.memo||'';
+  if (d.curUnit) setUnitBtn(`ecur-u-${i}`, d.curUnit);
+  if (d.newUnit) setUnitBtn(`enew-u-${i}`, d.newUnit);
+  const sk = `cat_s_p${currentPage}_e${i}`;
+  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e){}
+  onEvoInput(i);
+}
+
+// ============================================================
 // ストレージ
 // ============================================================
-function skPts()  { return `cat_s_p${currentPage}_pts`; }
-
 function saveCurrentPts() {
-  try { localStorage.setItem(skPts(), JSON.stringify({val: document.getElementById('current-pts').value, unit: ptsUnit})); } catch(e){}
+  try { localStorage.setItem(`cat_s_p${currentPage}_pts`, JSON.stringify({val: document.getElementById('current-pts').value, unit: ptsUnit})); } catch(e){}
 }
 function loadCurrentPts() {
   try {
-    const raw = localStorage.getItem(skPts());
+    const raw = localStorage.getItem(`cat_s_p${currentPage}_pts`);
     if (!raw) return;
     const data = JSON.parse(raw);
     if (data && data.val !== undefined) {
@@ -1068,46 +1274,11 @@ function loadCurrentPts() {
     btn.className = 'pts-unit-btn '+(ptsUnit==='M'?'active-m':'active-k');
   } catch(e){}
 }
-function onCurrentPtsInput() { saveCurrentPts(); calcAll(); }
 
 function saveAllSlots() {
-  const data = { build:[], evo:[], hatch:{} };
-  for (let i=0; i<BUILD_COUNT; i++) {
-    data.build.push({
-      curNum: document.getElementById(`bcur-${i}`)?.value||'',
-      curUnit: document.getElementById(`bcur-u-${i}`)?.textContent||'K',
-      newNum: document.getElementById(`bnew-${i}`)?.value||'',
-      newUnit: document.getElementById(`bnew-u-${i}`)?.textContent||'K',
-      days: document.getElementById(`bdays-${i}`)?.value||'',
-      hour: document.getElementById(`bhour-${i}`)?.value||'',
-      min:  document.getElementById(`bmin-${i}`)?.value||'',
-      quick: document.getElementById(`bquick-${i}`)?.value||'',
-      memo: document.getElementById(`bmemo-${i}`)?.value||'',
-      checked: document.getElementById(`bcheck-${i}`)?.checked||false,
-    });
-  }
-  for (let i=0; i<EVO_COUNT; i++) {
-    data.evo.push({
-      curNum: document.getElementById(`ecur-${i}`)?.value||'',
-      curUnit: document.getElementById(`ecur-u-${i}`)?.textContent||'K',
-      newNum: document.getElementById(`enew-${i}`)?.value||'',
-      newUnit: document.getElementById(`enew-u-${i}`)?.textContent||'K',
-      days: document.getElementById(`edays-${i}`)?.value||'',
-      hour: document.getElementById(`ehour-${i}`)?.value||'',
-      min:  document.getElementById(`emin-${i}`)?.value||'',
-      quick: document.getElementById(`equick-${i}`)?.value||'',
-      memo: document.getElementById(`ememo-${i}`)?.value||'',
-    });
-  }
-  HATCH_SLOTS.forEach(s => {
-    data.hatch[s.key] = {
-      days: document.getElementById(`hdays-${s.key}`)?.value||'',
-      hour: document.getElementById(`hhour-${s.key}`)?.value||'',
-      min:  document.getElementById(`hmin-${s.key}`)?.value||'',
-      quick: document.getElementById(`hquick-${s.key}`)?.value||'',
-      memo: document.getElementById(`hmemo-${s.key}`)?.value||'',
-    };
-  });
+  const data = { build: [], evo: [] };
+  [...LEFT_BUILD,...MID_BUILD].forEach(i => data.build[i] = getBuildSlotData(i));
+  for (let i=0; i<EVO_COUNT; i++) data.evo[i] = getEvoSlotData(i);
   try { localStorage.setItem(`cat_s_p${currentPage}_slots`, JSON.stringify(data)); } catch(e){}
 }
 
@@ -1116,67 +1287,32 @@ function loadAllSlots() {
     const raw = localStorage.getItem(`cat_s_p${currentPage}_slots`);
     if (!raw) return;
     const data = JSON.parse(raw);
-    (data.build||[]).forEach((d,i) => {
-      if (document.getElementById(`bcur-${i}`)) {
-        document.getElementById(`bcur-${i}`).value = d.curNum||'';
-        document.getElementById(`bnew-${i}`).value = d.newNum||'';
-        document.getElementById(`bdays-${i}`).value = d.days||'';
-        document.getElementById(`bhour-${i}`).value = d.hour||'';
-        document.getElementById(`bmin-${i}`).value  = d.min||'';
-        document.getElementById(`bquick-${i}`).value = d.quick||'';
-        document.getElementById(`bmemo-${i}`).value = d.memo||'';
-        document.getElementById(`bcheck-${i}`).checked = !!d.checked;
-        if (d.curUnit) setUnitBtn(`bcur-u-${i}`, d.curUnit);
-        if (d.newUnit) setUnitBtn(`bnew-u-${i}`, d.newUnit);
-        onBuildInput(i);
-      }
+    [...LEFT_BUILD,...MID_BUILD].forEach(i => {
+      const d = (data.build||[])[i];
+      if (d) applyBuildSlotData(i, d);
     });
-    (data.evo||[]).forEach((d,i) => {
-      if (document.getElementById(`ecur-${i}`)) {
-        document.getElementById(`ecur-${i}`).value = d.curNum||'';
-        document.getElementById(`enew-${i}`).value = d.newNum||'';
-        document.getElementById(`edays-${i}`).value = d.days||'';
-        document.getElementById(`ehour-${i}`).value = d.hour||'';
-        document.getElementById(`emin-${i}`).value  = d.min||'';
-        document.getElementById(`equick-${i}`).value = d.quick||'';
-        document.getElementById(`ememo-${i}`).value = d.memo||'';
-        if (d.curUnit) setUnitBtn(`ecur-u-${i}`, d.curUnit);
-        if (d.newUnit) setUnitBtn(`enew-u-${i}`, d.newUnit);
-        onEvoInput(i);
-      }
-    });
-    HATCH_SLOTS.forEach(s => {
-      const d = (data.hatch||{})[s.key];
-      if (!d) return;
-      document.getElementById(`hdays-${s.key}`).value = d.days||'';
-      document.getElementById(`hhour-${s.key}`).value = d.hour||'';
-      document.getElementById(`hmin-${s.key}`).value  = d.min||'';
-      document.getElementById(`hquick-${s.key}`).value = d.quick||'';
-      document.getElementById(`hmemo-${s.key}`).value = d.memo||'';
-    });
+    for (let i=0; i<EVO_COUNT; i++) {
+      const d = (data.evo||[])[i];
+      if (d) applyEvoSlotData(i, d);
+    }
   } catch(e){}
 }
 
 // ============================================================
-// ページ切替
+// ページ・タブ切替
 // ============================================================
 function switchPage(page) {
   currentPage = page;
   document.querySelectorAll('.page-tab').forEach((el,i) => el.classList.toggle('active', i===page));
-  loadCurrentPts();
-  loadAllSlots();
-  calcAll();
+  loadCurrentPts(); loadAllSlots(); calcAll();
 }
-
-// ============================================================
-// スマホタブ切替
-// ============================================================
 function switchMobTab(tab) {
   mobTab = tab;
   document.querySelectorAll('.mob-tab').forEach(el => el.classList.remove('active'));
-  document.querySelector(`.mob-tab[onclick*="${tab}"]`).classList.add('active');
+  const tabEl = document.querySelector(`.mob-tab[onclick*="'${tab}'"]`);
+  if (tabEl) tabEl.classList.add('active');
   const layout = document.getElementById('layout');
-  layout.className = 'layout' + (tab==='left'?' show-left': tab==='right'?' show-right':'');
+  layout.className = 'layout' + (tab==='left'?' show-left': tab==='mid'?' show-mid': tab==='right'?' show-right':'');
 }
 
 // ============================================================
@@ -1184,14 +1320,13 @@ function switchMobTab(tab) {
 // ============================================================
 function init() {
   // 建築スロット生成
-  const buildEl = document.getElementById('build-slots');
-  for (let i=0; i<BUILD_COUNT; i++) buildEl.innerHTML += buildBuildSlot(i);
+  const leftEl = document.getElementById('build-slots-left');
+  LEFT_BUILD.forEach(i => leftEl.innerHTML += buildBuildSlotHTML(i));
+  const midEl = document.getElementById('build-slots-mid');
+  MID_BUILD.forEach(i => midEl.innerHTML += buildBuildSlotHTML(i));
   // 進化スロット生成
   const evoEl = document.getElementById('evo-slots');
-  for (let i=0; i<EVO_COUNT; i++) evoEl.innerHTML += buildEvoSlot(i);
-  // 兵隊アリスロット生成
-  const hatchEl = document.getElementById('hatch-slots');
-  HATCH_SLOTS.forEach(s => hatchEl.innerHTML += buildHatchSlot(s));
+  for (let i=0; i<EVO_COUNT; i++) evoEl.innerHTML += buildEvoSlotHTML(i);
 
   // DB読み込み
   fetch(DB_PATH).then(r=>r.json()).then(data => {
@@ -1199,24 +1334,20 @@ function init() {
     updateSlotBar();
   }).catch(() => {
     document.getElementById('slot-event').textContent = 'DBロード失敗（ca_database.jsonを同フォルダに置いてください）';
+    document.getElementById('slot-tasks-detail').innerHTML = '<div class="no-task">DBロード失敗</div>';
   });
 
   loadCurrentPts();
   loadAllSlots();
   updateClock();
 
-  // 1秒ごと更新
   setInterval(() => {
     updateClock();
-    for (let i=0; i<BUILD_COUNT; i++) updateCountdown(`bcd-${i}`,`bdays-${i}`,`bhour-${i}`,`bmin-${i}`,`cat_b${currentPage}_${i}`);
-    for (let i=0; i<EVO_COUNT; i++)   updateCountdown(`ecd-${i}`,`edays-${i}`,`ehour-${i}`,`emin-${i}`,`cat_e${currentPage}_${i}`);
-    HATCH_SLOTS.forEach(s => updateCountdown(`hcd-${s.key}`,`hdays-${s.key}`,`hhour-${s.key}`,`hmin-${s.key}`,`cat_h${currentPage}_${s.key}`));
+    [...LEFT_BUILD,...MID_BUILD].forEach(i => updateCountdown(`bcd-${i}`,`bdays-${i}`,`bhour-${i}`,`bmin-${i}`,`cat_s_p${currentPage}_b${i}`));
+    for (let i=0; i<EVO_COUNT; i++) updateCountdown(`ecd-${i}`,`edays-${i}`,`ehour-${i}`,`emin-${i}`,`cat_s_p${currentPage}_e${i}`);
   }, 1000);
 
-  // 1分ごとにスロット再確認
-  setInterval(() => {
-    updateSlotBar();
-  }, 60000);
+  setInterval(() => updateSlotBar(), 60000);
 }
 
 init();

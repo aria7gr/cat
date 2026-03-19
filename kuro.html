@@ -4,6 +4,7 @@
 
   v0.1  2026.03.17  初回リリース：中央CA計算・左建築スロット・右進化+兵隊アリ・PC3列/スマホタブ・メイン/サブ切替
   v0.2  2026.03.19  レイアウト再設計(左建築1〜4/中建築5〜7+進化/右CA計算)・タスク折りたたみ表示・一括コピペ機能・🐈‍⬛ファビコン・ヘッダーデザイン刷新・サイド幅拡張・孵化スロット削除
+  v0.3  2026.03.19  パターンA左ボーダーアクセント・スロット個別/一括折りたたみ(ダッシュボード表示)・ページ切替時の入力クリア修正
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -182,6 +183,15 @@ body {
   justify-content: space-between;
 }
 
+/* 一括開閉ボタン */
+.toggle-all-btn {
+  font-size: 11px; color: var(--text-dim); background: none;
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 2px 7px; cursor: pointer; font-family: var(--font-main);
+  transition: color 0.15s, border-color 0.15s;
+}
+.toggle-all-btn:hover { color: var(--accent); border-color: var(--accent); }
+
 /* ============================================================ 一括コピペボタン */
 .bulk-btn-row {
   display: flex;
@@ -224,6 +234,7 @@ body {
 .slot-card {
   background: var(--surface2);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   border-radius: 6px;
   padding: 9px 10px;
   margin-bottom: 8px;
@@ -231,6 +242,49 @@ body {
 }
 .slot-card:hover { border-color: var(--accent); }
 .slot-card.checked { border-color: var(--checked-border); background: var(--checked-bg); }
+
+/* パターンA：左ボーダーアクセント */
+.slot-card.odd  { border-left: 3px solid var(--accent); }
+.slot-card.even { border-left: 3px solid var(--green); }
+.slot-card.evo  { border-left: 3px solid var(--r3-color); }
+
+/* 番号バッジ */
+.slot-num-badge {
+  width: 18px; height: 18px; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+}
+.slot-num-badge.odd  { background: rgba(200,184,232,0.18); color: var(--accent); }
+.slot-num-badge.even { background: rgba(160,208,192,0.18); color: var(--green); }
+.slot-num-badge.evo  { background: rgba(232,152,120,0.18); color: var(--r3-color); }
+
+/* 折りたたみヘッダー（クリック可能） */
+.slot-toggle-btn {
+  width: 100%;
+  display: flex; align-items: center; gap: 7px;
+  background: none; border: none; cursor: pointer;
+  padding: 0; text-align: left;
+  margin-bottom: 0;
+}
+.slot-toggle-btn:focus { outline: none; }
+.slot-toggle-label { font-size: var(--sz-sm); font-weight: 700; color: var(--text-dim); flex: 1; }
+.slot-toggle-cd {
+  font-family: var(--font-mono); font-size: 10px; color: var(--accent);
+  flex: 2; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.slot-toggle-arrow { font-size: 10px; color: var(--text-dim); flex-shrink: 0; margin-left: 4px; }
+
+/* 折りたたみ本体 */
+.slot-body { overflow: hidden; transition: max-height 0.2s ease; }
+.slot-body.collapsed { max-height: 0 !important; }
+
+/* 畳んだ時のメモ preview */
+.slot-memo-preview {
+  font-size: 11px; color: var(--text-dim); margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: none;
+}
+.slot-card.collapsed .slot-memo-preview { display: block; }
 
 .slot-header { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
 .slot-checkbox { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
@@ -488,6 +542,7 @@ body {
   <div class="col-left" id="col-left">
     <div class="panel-title">
       <span>☽ 建築 1〜4</span>
+      <button class="toggle-all-btn" onclick="toggleAllSlots('left')">一括開閉</button>
     </div>
     <div class="bulk-btn-row">
       <button class="bulk-btn" onclick="bulkCopy('left')">左列まとめてコピー</button>
@@ -501,6 +556,7 @@ body {
   <div class="col-mid" id="col-mid">
     <div class="panel-title">
       <span>☽ 建築 5〜7 + 進化</span>
+      <button class="toggle-all-btn" onclick="toggleAllSlots('mid')">一括開閉</button>
     </div>
     <div class="bulk-btn-row">
       <button class="bulk-btn" onclick="bulkCopy('mid')">中列まとめてコピー</button>
@@ -577,7 +633,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 19 '26 🐈‍⬛ v0.2</div>
+<div class="version-label">Mar 19 '26 🐈‍⬛ v0.3</div>
 
 <script>
 // ============================================================
@@ -894,7 +950,7 @@ function updateCountdown(cdId, daysId, hourId, minId, startKey) {
   const cdEl = document.getElementById(cdId);
   if (!cdEl) return;
   const totalSecs = d*86400 + h*3600 + m*60;
-  if (totalSecs <= 0) { cdEl.textContent=''; cdEl.className='slot-countdown empty'; return; }
+  if (totalSecs <= 0) { cdEl.textContent=''; return; }
   let startTime;
   try {
     const stored = localStorage.getItem(startKey);
@@ -903,15 +959,16 @@ function updateCountdown(cdId, daysId, hourId, minId, startKey) {
     else { startTime = Date.now(); localStorage.setItem(startKey, startTime); localStorage.setItem(startKey+'_total', totalSecs); }
   } catch(e) { startTime = Date.now(); }
   const remaining = Math.max(0, totalSecs - Math.floor((Date.now()-startTime)/1000));
-  if (remaining === 0) { cdEl.textContent='完成'; cdEl.className='slot-countdown done'; return; }
+  if (remaining === 0) { cdEl.textContent='完成 ✓'; cdEl.style.color='var(--green)'; return; }
+  cdEl.style.color='';
   const dd=Math.floor(remaining/86400), hh=Math.floor((remaining%86400)/3600);
   const mm=Math.floor((remaining%3600)/60), ss=remaining%60;
   let text='残 '; if(dd>0)text+=`${dd}日 `;
   text+=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
   const ft=new Date(startTime+totalSecs*1000);
   const mo=ft.getMonth()+1, fd=ft.getDate(), dw=DAY_LABELS[ft.getDay()];
-  text+=`　完成：${mo}/${fd}(${dw}) ${String(ft.getHours()).padStart(2,'0')}:${String(ft.getMinutes()).padStart(2,'0')}`;
-  cdEl.textContent=text; cdEl.className='slot-countdown';
+  text+=` 完成:${mo}/${fd}(${dw})`;
+  cdEl.textContent=text;
 }
 
 function onQuickInput(quickId, daysId, hourId, minId, startKey) {
@@ -931,55 +988,63 @@ function onQuickInput(quickId, daysId, hourId, minId, startKey) {
 // ============================================================
 function buildBuildSlotHTML(i) {
   const sk = `cat_s_p${currentPage}_b${i}`;
+  const parity = i % 2 === 0 ? 'odd' : 'even';  // 1始まりで奇数=odd
   return `
-    <div class="slot-card" id="bcard-${i}">
-      <div class="slot-header">
-        <input type="checkbox" class="slot-checkbox" id="bcheck-${i}" onchange="onBuildChange(${i})">
-        <span class="slot-label-text">建築${i+1}</span>
-        <span class="slot-ca-pts empty" id="bca-${i}">— pt</span>
-      </div>
-      <div class="slot-fields">
-        <div class="field-row">
-          <span class="field-label">現在BP</span>
-          <div class="bp-input-wrap">
-            <input class="bp-num-input" id="bcur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
-            <button class="bp-unit-btn active-k" id="bcur-u-${i}" onclick="toggleBpUnit('bcur-u-${i}','bnew-u-${i}')">K</button>
+    <div class="slot-card ${parity}" id="bcard-${i}">
+      <button class="slot-toggle-btn" onclick="toggleSlot('bcard-${i}','bbody-${i}','barrow-${i}')">
+        <span class="slot-num-badge ${parity}">${i+1}</span>
+        <span class="slot-toggle-label">建築${i+1}</span>
+        <span class="slot-toggle-cd" id="bcd-${i}"></span>
+        <span class="slot-toggle-arrow" id="barrow-${i}">▼</span>
+      </button>
+      <div class="slot-memo-preview" id="bmemo-prev-${i}"></div>
+      <div class="slot-body" id="bbody-${i}" style="max-height:600px;">
+        <div class="slot-header" style="margin-top:8px;">
+          <input type="checkbox" class="slot-checkbox" id="bcheck-${i}" onchange="onBuildChange(${i})">
+          <span class="slot-ca-pts empty" id="bca-${i}">— pt</span>
+        </div>
+        <div class="slot-fields">
+          <div class="field-row">
+            <span class="field-label">現在BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="bcur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
+              <button class="bp-unit-btn active-k" id="bcur-u-${i}" onclick="toggleBpUnit('bcur-u-${i}','bnew-u-${i}')">K</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <span class="field-label">完成後BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="bnew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
+              <button class="bp-unit-btn active-k" id="bnew-u-${i}" onclick="toggleBpUnit('bnew-u-${i}','bcur-u-${i}')">K</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <span class="field-label">+BP</span>
+            <span class="field-result empty" id="bdiff-${i}">—</span>
+          </div>
+          <div class="ca-convert-row">
+            <span class="ca-convert-label">CA換算</span>
+            <span class="ca-convert-val empty" id="bcaval-${i}">—</span>
+          </div>
+          <div class="quick-input-row">
+            <span class="quick-label">残り時間</span>
+            <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','${sk}');onBuildInput(${i})">
+          </div>
+          <div class="field-row">
+            <span class="field-label"></span>
+            <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
+            <span class="unit-label">日</span>
+            <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+            <span class="unit-label">時</span>
+            <input class="bp-num-input" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+            <span class="unit-label">分</span>
           </div>
         </div>
-        <div class="field-row">
-          <span class="field-label">完成後BP</span>
-          <div class="bp-input-wrap">
-            <input class="bp-num-input" id="bnew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
-            <button class="bp-unit-btn active-k" id="bnew-u-${i}" onclick="toggleBpUnit('bnew-u-${i}','bcur-u-${i}')">K</button>
-          </div>
+        <textarea class="slot-memo" id="bmemo-${i}" rows="2" placeholder="メモ" oninput="updateMemoPreview(${i});saveAllSlots()"></textarea>
+        <div class="slot-btn-row">
+          <button class="reset-btn" onclick="resetBuildSlot(${i})">リセット</button>
+          <button class="reset-btn memo" onclick="resetMemo('bmemo-${i}',${i})">メモリセット</button>
         </div>
-        <div class="field-row">
-          <span class="field-label">+BP</span>
-          <span class="field-result empty" id="bdiff-${i}">—</span>
-        </div>
-        <div class="ca-convert-row">
-          <span class="ca-convert-label">CA換算</span>
-          <span class="ca-convert-val empty" id="bcaval-${i}">—</span>
-        </div>
-        <div class="quick-input-row">
-          <span class="quick-label">残り時間</span>
-          <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','${sk}');onBuildInput(${i})">
-        </div>
-        <div class="field-row">
-          <span class="field-label"></span>
-          <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
-          <span class="unit-label">日</span>
-          <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-          <span class="unit-label">時</span>
-          <input class="bp-num-input" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-          <span class="unit-label">分</span>
-        </div>
-      </div>
-      <div class="slot-countdown empty" id="bcd-${i}">—</div>
-      <textarea class="slot-memo" id="bmemo-${i}" rows="2" placeholder="メモ" oninput="saveAllSlots()"></textarea>
-      <div class="slot-btn-row">
-        <button class="reset-btn" onclick="resetBuildSlot(${i})">リセット</button>
-        <button class="reset-btn memo" onclick="resetMemo('bmemo-${i}')">メモリセット</button>
       </div>
     </div>`;
 }
@@ -990,45 +1055,53 @@ function buildBuildSlotHTML(i) {
 function buildEvoSlotHTML(i) {
   const sk = `cat_s_p${currentPage}_e${i}`;
   return `
-    <div class="slot-card">
-      <div class="slot-fields">
-        <div class="field-row">
-          <span class="field-label">現在BP</span>
-          <div class="bp-input-wrap">
-            <input class="bp-num-input" id="ecur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
-            <button class="bp-unit-btn active-k" id="ecur-u-${i}" onclick="toggleBpUnit('ecur-u-${i}','enew-u-${i}')">K</button>
+    <div class="slot-card evo" id="ecard-${i}">
+      <button class="slot-toggle-btn" onclick="toggleSlot('ecard-${i}','ebody-${i}','earrow-${i}')">
+        <span class="slot-num-badge evo">進</span>
+        <span class="slot-toggle-label">進化1</span>
+        <span class="slot-toggle-cd" id="ecd-${i}"></span>
+        <span class="slot-toggle-arrow" id="earrow-${i}">▼</span>
+      </button>
+      <div class="slot-memo-preview" id="ememo-prev-${i}"></div>
+      <div class="slot-body" id="ebody-${i}" style="max-height:600px;">
+        <div class="slot-fields" style="margin-top:8px;">
+          <div class="field-row">
+            <span class="field-label">現在BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="ecur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
+              <button class="bp-unit-btn active-k" id="ecur-u-${i}" onclick="toggleBpUnit('ecur-u-${i}','enew-u-${i}')">K</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <span class="field-label">完成後BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="enew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
+              <button class="bp-unit-btn active-k" id="enew-u-${i}" onclick="toggleBpUnit('enew-u-${i}','ecur-u-${i}')">K</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <span class="field-label">+BP</span>
+            <span class="field-result empty" id="ediff-${i}">—</span>
+          </div>
+          <div class="quick-input-row">
+            <span class="quick-label">残り時間</span>
+            <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','${sk}');saveAllSlots()">
+          </div>
+          <div class="field-row">
+            <span class="field-label"></span>
+            <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
+            <span class="unit-label">日</span>
+            <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+            <span class="unit-label">時</span>
+            <input class="bp-num-input" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+            <span class="unit-label">分</span>
           </div>
         </div>
-        <div class="field-row">
-          <span class="field-label">完成後BP</span>
-          <div class="bp-input-wrap">
-            <input class="bp-num-input" id="enew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
-            <button class="bp-unit-btn active-k" id="enew-u-${i}" onclick="toggleBpUnit('enew-u-${i}','ecur-u-${i}')">K</button>
-          </div>
+        <textarea class="slot-memo" id="ememo-${i}" rows="2" placeholder="メモ" oninput="updateEvoMemoPreview(${i});saveAllSlots()"></textarea>
+        <div class="slot-btn-row">
+          <button class="reset-btn" onclick="resetEvoSlot(${i})">リセット</button>
+          <button class="reset-btn memo" onclick="resetMemo('ememo-${i}',null,${i})">メモリセット</button>
         </div>
-        <div class="field-row">
-          <span class="field-label">+BP</span>
-          <span class="field-result empty" id="ediff-${i}">—</span>
-        </div>
-        <div class="quick-input-row">
-          <span class="quick-label">残り時間</span>
-          <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','${sk}');saveAllSlots()">
-        </div>
-        <div class="field-row">
-          <span class="field-label"></span>
-          <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
-          <span class="unit-label">日</span>
-          <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-          <span class="unit-label">時</span>
-          <input class="bp-num-input" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-          <span class="unit-label">分</span>
-        </div>
-      </div>
-      <div class="slot-countdown empty" id="ecd-${i}">—</div>
-      <textarea class="slot-memo" id="ememo-${i}" rows="2" placeholder="メモ" oninput="saveAllSlots()"></textarea>
-      <div class="slot-btn-row">
-        <button class="reset-btn" onclick="resetEvoSlot(${i})">リセット</button>
-        <button class="reset-btn memo" onclick="resetMemo('ememo-${i}')">メモリセット</button>
       </div>
     </div>`;
 }
@@ -1126,6 +1199,65 @@ function calcAll() {
 }
 
 // ============================================================
+// 折りたたみ制御
+// ============================================================
+function toggleSlot(cardId, bodyId, arrowId) {
+  const body  = document.getElementById(bodyId);
+  const arrow = document.getElementById(arrowId);
+  const card  = document.getElementById(cardId);
+  if (!body) return;
+  const isCollapsed = body.classList.toggle('collapsed');
+  card.classList.toggle('collapsed', isCollapsed);
+  if (arrow) arrow.textContent = isCollapsed ? '▶' : '▼';
+}
+
+function toggleAllSlots(col) {
+  const indices = col === 'left' ? LEFT_BUILD : MID_BUILD;
+  // 1つでも開いていれば全閉、全閉なら全開
+  const anyOpen = indices.some(i => !document.getElementById(`bbody-${i}`)?.classList.contains('collapsed'));
+  indices.forEach(i => {
+    const body  = document.getElementById(`bbody-${i}`);
+    const arrow = document.getElementById(`barrow-${i}`);
+    const card  = document.getElementById(`bcard-${i}`);
+    if (!body) return;
+    if (anyOpen) {
+      body.classList.add('collapsed'); card.classList.add('collapsed');
+      if (arrow) arrow.textContent = '▶';
+    } else {
+      body.classList.remove('collapsed'); card.classList.remove('collapsed');
+      if (arrow) arrow.textContent = '▼';
+    }
+  });
+  // 進化スロットも中列に含める
+  if (col === 'mid') {
+    for (let i=0; i<EVO_COUNT; i++) {
+      const body  = document.getElementById(`ebody-${i}`);
+      const arrow = document.getElementById(`earrow-${i}`);
+      const card  = document.getElementById(`ecard-${i}`);
+      if (!body) return;
+      if (anyOpen) {
+        body.classList.add('collapsed'); card.classList.add('collapsed');
+        if (arrow) arrow.textContent = '▶';
+      } else {
+        body.classList.remove('collapsed'); card.classList.remove('collapsed');
+        if (arrow) arrow.textContent = '▼';
+      }
+    }
+  }
+}
+
+function updateMemoPreview(i) {
+  const memo = document.getElementById(`bmemo-${i}`)?.value || '';
+  const prev = document.getElementById(`bmemo-prev-${i}`);
+  if (prev) prev.textContent = memo;
+}
+function updateEvoMemoPreview(i) {
+  const memo = document.getElementById(`ememo-${i}`)?.value || '';
+  const prev = document.getElementById(`ememo-prev-${i}`);
+  if (prev) prev.textContent = memo;
+}
+
+// ============================================================
 // リセット
 // ============================================================
 function resetBuildSlot(i) {
@@ -1133,6 +1265,7 @@ function resetBuildSlot(i) {
   ['bdays','bhour','bmin','bquick'].forEach(f => { const el=document.getElementById(`${f}-${i}`); if(el) el.value=''; });
   document.getElementById(`bcheck-${i}`).checked = false;
   setUnitBtn(`bcur-u-${i}`,'K'); setUnitBtn(`bnew-u-${i}`,'K');
+  updateMemoPreview(i);
   const sk = `cat_s_p${currentPage}_b${i}`;
   try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e){}
   onBuildInput(i);
@@ -1141,11 +1274,18 @@ function resetEvoSlot(i) {
   ['ecur','enew'].forEach(f => { const el=document.getElementById(`${f}-${i}`); if(el) el.value=''; });
   ['edays','ehour','emin','equick'].forEach(f => { const el=document.getElementById(`${f}-${i}`); if(el) el.value=''; });
   setUnitBtn(`ecur-u-${i}`,'K'); setUnitBtn(`enew-u-${i}`,'K');
+  updateEvoMemoPreview(i);
   const sk = `cat_s_p${currentPage}_e${i}`;
   try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e){}
   onEvoInput(i); saveAllSlots();
 }
-function resetMemo(id) { const el=document.getElementById(id); if(el) el.value=''; saveAllSlots(); }
+function resetMemo(memoId, buildIdx, evoIdx) {
+  const el = document.getElementById(memoId);
+  if (el) el.value = '';
+  if (buildIdx !== null && buildIdx !== undefined) updateMemoPreview(buildIdx);
+  if (evoIdx !== null && evoIdx !== undefined) updateEvoMemoPreview(evoIdx);
+  saveAllSlots();
+}
 
 // ============================================================
 // 一括コピペ
@@ -1289,11 +1429,11 @@ function loadAllSlots() {
     const data = JSON.parse(raw);
     [...LEFT_BUILD,...MID_BUILD].forEach(i => {
       const d = (data.build||[])[i];
-      if (d) applyBuildSlotData(i, d);
+      if (d) { applyBuildSlotData(i, d); updateMemoPreview(i); }
     });
     for (let i=0; i<EVO_COUNT; i++) {
       const d = (data.evo||[])[i];
-      if (d) applyEvoSlotData(i, d);
+      if (d) { applyEvoSlotData(i, d); updateEvoMemoPreview(i); }
     }
   } catch(e){}
 }
@@ -1304,7 +1444,36 @@ function loadAllSlots() {
 function switchPage(page) {
   currentPage = page;
   document.querySelectorAll('.page-tab').forEach((el,i) => el.classList.toggle('active', i===page));
-  loadCurrentPts(); loadAllSlots(); calcAll();
+  // ページ切替時は入力欄をクリアしてから読み込む
+  clearAllInputs();
+  loadCurrentPts();
+  loadAllSlots();
+  calcAll();
+}
+
+function clearAllInputs() {
+  [...LEFT_BUILD,...MID_BUILD].forEach(i => {
+    ['bcur','bnew','bdays','bhour','bmin','bquick','bmemo'].forEach(f => {
+      const el = document.getElementById(`${f}-${i}`); if(el) el.value='';
+    });
+    const chk = document.getElementById(`bcheck-${i}`); if(chk) chk.checked=false;
+    setUnitBtn(`bcur-u-${i}`,'K'); setUnitBtn(`bnew-u-${i}`,'K');
+    updateMemoPreview(i);
+    onBuildInput(i);
+  });
+  for (let i=0; i<EVO_COUNT; i++) {
+    ['ecur','enew','edays','ehour','emin','equick','ememo'].forEach(f => {
+      const el = document.getElementById(`${f}-${i}`); if(el) el.value='';
+    });
+    setUnitBtn(`ecur-u-${i}`,'K'); setUnitBtn(`enew-u-${i}`,'K');
+    updateEvoMemoPreview(i);
+    onEvoInput(i);
+  }
+  const ptsEl = document.getElementById('current-pts');
+  if (ptsEl) ptsEl.value = '';
+  ptsUnit = 'K';
+  const btn = document.getElementById('pts-unit-btn');
+  if (btn) { btn.textContent='K'; btn.className='pts-unit-btn active-k'; }
 }
 function switchMobTab(tab) {
   mobTab = tab;

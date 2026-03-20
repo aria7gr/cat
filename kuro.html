@@ -8,6 +8,7 @@
   v0.4  2026.03.19  フォントサイズ引き上げ・ヘッダー1行化・日付表示追加（チャトラ準拠）
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
+  v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -23,6 +24,7 @@
   --bg:        #111113;
   --surface:   #1a1a1f;
   --surface2:  #242428;
+  --surface2c: #1e1e22;
   --surface3:  #2e2e34;
   --border:    #3a3a44;
   --text:      #e8e4f0;
@@ -31,6 +33,8 @@
   --accent:    #c8b8e8;
   --accent2:   #ddd0f8;
   --green:     #a0d0c0;
+  --mint:      #7ecfb0;
+  --offwhite:  #e8e4f0;
   --r1-color:  #80c898;
   --r2-color:  #c8b8e8;
   --r3-color:  #e89878;
@@ -38,6 +42,11 @@
   --highlight-border: rgba(200,184,232,0.4);
   --checked-border: rgba(200,184,232,0.7);
   --checked-bg:     rgba(200,184,232,0.07);
+  --cd-normal: #8a8a9a;
+  --cd-day:    #a08040;
+  --cd-8h:     #c8a030;
+  --cd-3h:     #e8c040;
+  --cd-1h:     #ffe060;
   --font-main: 'Noto Sans JP', sans-serif;
   --font-mono: 'Roboto Mono', monospace;
   --sz-sm:   12px;
@@ -279,28 +288,47 @@ body {
 }
 .slot-toggle-btn:focus { outline: none; }
 .slot-toggle-label { font-size: var(--sz-base); font-weight: 700; color: var(--text-dim); flex: 1; }
-.slot-toggle-cd {
-  font-family: var(--font-mono); font-size: var(--sz-sm); color: var(--accent);
-  flex: 2; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
 .slot-toggle-arrow { font-size: var(--sz-sm); color: var(--text-dim); flex-shrink: 0; margin-left: 4px; }
 
 /* 折りたたみ本体 */
 .slot-body { overflow: hidden; transition: max-height 0.2s ease; }
 .slot-body.collapsed { max-height: 0 !important; }
 
-/* 畳んだ時：カード高さを120pxに固定、メモpreviewを表示 */
-.slot-card.collapsed { min-height: 120px; }
+/* 折りたたみ時：背景をわずかに暗く */
+.slot-card.collapsed { min-height: 120px; background: var(--surface2c); }
+
+/* 緊急度クラス */
+.cd-normal { color: var(--cd-normal); }
+.cd-day    { color: var(--cd-day); }
+.cd-8h     { color: var(--cd-8h); }
+.cd-3h     { color: var(--cd-3h); }
+.cd-1h     { color: var(--cd-1h); }
+.cd-done   { color: var(--green); }
+
+/* 折りたたみ時に表示する残り時間・完成日時 */
+.slot-collapsed-info { margin-top: 5px; display: none; }
+.slot-card.collapsed .slot-collapsed-info { display: block; }
+.slot-cd-remaining {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 500;
+  display: block; margin-bottom: 2px;
+}
+.slot-cd-finish {
+  font-family: var(--font-mono); font-size: var(--sz-sm);
+  color: var(--mint); display: block; margin-bottom: 5px;
+}
+
+/* メモプレビュー */
 .slot-memo-preview {
   font-size: var(--sz-base);
-  color: var(--text-dim);
-  margin-top: 6px;
+  color: var(--offwhite);
   line-height: 1.5;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   white-space: pre-wrap;
+  border-top: 1px solid rgba(58,58,68,0.5);
+  padding-top: 5px;
   visibility: hidden;
 }
 .slot-card.collapsed .slot-memo-preview { visibility: visible; }
@@ -656,7 +684,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 19 '26 🐈‍⬛ v0.4.2</div>
+<div class="version-label">Mar 20 '26 🐈‍⬛ v0.4.3</div>
 
 <script>
 // ============================================================
@@ -995,14 +1023,30 @@ function onCurrentPtsInput() { saveCurrentPts(); calcAll(); }
 // ============================================================
 // カウントダウン
 // ============================================================
-function updateCountdown(cdId, daysId, hourId, minId, startKey) {
+function getCdClass(remaining) {
+  if (remaining <= 0)         return 'cd-done';
+  if (remaining < 3600)       return 'cd-1h';
+  if (remaining < 10800)      return 'cd-3h';
+  if (remaining < 28800)      return 'cd-8h';
+  if (remaining < 86400)      return 'cd-day';
+  return 'cd-normal';
+}
+
+function updateCountdown(remainingId, finishId, daysId, hourId, minId, startKey) {
   const d = parseInt(document.getElementById(daysId)?.value)||0;
   const h = parseInt(document.getElementById(hourId)?.value)||0;
   const m = parseInt(document.getElementById(minId)?.value)||0;
-  const cdEl = document.getElementById(cdId);
-  if (!cdEl) return;
+  const remainEl = document.getElementById(remainingId);
+  const finishEl = document.getElementById(finishId);
+  if (!remainEl) return;
+
   const totalSecs = d*86400 + h*3600 + m*60;
-  if (totalSecs <= 0) { cdEl.textContent=''; return; }
+  if (totalSecs <= 0) {
+    remainEl.textContent = '';
+    remainEl.className = 'slot-cd-remaining cd-normal';
+    if (finishEl) finishEl.textContent = '';
+    return;
+  }
   let startTime;
   try {
     const stored = localStorage.getItem(startKey);
@@ -1010,17 +1054,31 @@ function updateCountdown(cdId, daysId, hourId, minId, startKey) {
     if (stored && savedTotal === totalSecs) { startTime = parseInt(stored); }
     else { startTime = Date.now(); localStorage.setItem(startKey, startTime); localStorage.setItem(startKey+'_total', totalSecs); }
   } catch(e) { startTime = Date.now(); }
+
   const remaining = Math.max(0, totalSecs - Math.floor((Date.now()-startTime)/1000));
-  if (remaining === 0) { cdEl.textContent='完成 ✓'; cdEl.style.color='var(--green)'; return; }
-  cdEl.style.color='';
+  const cdClass = getCdClass(remaining);
+
+  if (remaining === 0) {
+    remainEl.textContent = '完成';
+    remainEl.className = 'slot-cd-remaining cd-done';
+    if (finishEl) finishEl.textContent = '';
+    return;
+  }
+
   const dd=Math.floor(remaining/86400), hh=Math.floor((remaining%86400)/3600);
   const mm=Math.floor((remaining%3600)/60), ss=remaining%60;
-  let text='残 '; if(dd>0)text+=`${dd}日 `;
-  text+=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-  const ft=new Date(startTime+totalSecs*1000);
-  const mo=ft.getMonth()+1, fd=ft.getDate(), dw=DAY_LABELS[ft.getDay()];
-  text+=` 完成:${mo}/${fd}(${dw})`;
-  cdEl.textContent=text;
+  let text = '残 ';
+  if (dd>0) text += `${dd}日 `;
+  text += `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  remainEl.textContent = text;
+  remainEl.className = `slot-cd-remaining ${cdClass}`;
+
+  if (finishEl) {
+    const ft = new Date(startTime + totalSecs*1000);
+    const mo = ft.getMonth()+1, fd = ft.getDate(), dw = DAY_LABELS[ft.getDay()];
+    const fh = String(ft.getHours()).padStart(2,'0'), fm = String(ft.getMinutes()).padStart(2,'0');
+    finishEl.textContent = `完成：${mo}/${fd}(${dw}) ${fh}:${fm}`;
+  }
 }
 
 function onQuickInput(quickId, daysId, hourId, minId, startKey) {
@@ -1046,9 +1104,12 @@ function buildBuildSlotHTML(i) {
       <button class="slot-toggle-btn" onclick="toggleSlot('bcard-${i}','bbody-${i}','barrow-${i}')">
         <span class="slot-num-badge ${parity}">${i+1}</span>
         <span class="slot-toggle-label">建築${i+1}</span>
-        <span class="slot-toggle-cd" id="bcd-${i}"></span>
         <span class="slot-toggle-arrow" id="barrow-${i}">▼</span>
       </button>
+      <div class="slot-collapsed-info" id="bci-${i}">
+        <span class="slot-cd-remaining cd-normal" id="bcd-remaining-${i}"></span>
+        <span class="slot-cd-finish" id="bcd-finish-${i}"></span>
+      </div>
       <div class="slot-memo-preview" id="bmemo-prev-${i}"></div>
       <div class="slot-body" id="bbody-${i}" style="max-height:600px;">
         <div class="slot-header" style="margin-top:8px;">
@@ -1111,9 +1172,12 @@ function buildEvoSlotHTML(i) {
       <button class="slot-toggle-btn" onclick="toggleSlot('ecard-${i}','ebody-${i}','earrow-${i}')">
         <span class="slot-num-badge evo">進</span>
         <span class="slot-toggle-label">進化1</span>
-        <span class="slot-toggle-cd" id="ecd-${i}"></span>
         <span class="slot-toggle-arrow" id="earrow-${i}">▼</span>
       </button>
+      <div class="slot-collapsed-info" id="eci-${i}">
+        <span class="slot-cd-remaining cd-normal" id="ecd-remaining-${i}"></span>
+        <span class="slot-cd-finish" id="ecd-finish-${i}"></span>
+      </div>
       <div class="slot-memo-preview" id="ememo-prev-${i}"></div>
       <div class="slot-body" id="ebody-${i}" style="max-height:600px;">
         <div class="slot-fields" style="margin-top:8px;">
@@ -1564,8 +1628,8 @@ function init() {
 
   setInterval(() => {
     updateClock();
-    [...LEFT_BUILD,...MID_BUILD].forEach(i => updateCountdown(`bcd-${i}`,`bdays-${i}`,`bhour-${i}`,`bmin-${i}`,`cat_s_p${currentPage}_b${i}`));
-    for (let i=0; i<EVO_COUNT; i++) updateCountdown(`ecd-${i}`,`edays-${i}`,`ehour-${i}`,`emin-${i}`,`cat_s_p${currentPage}_e${i}`);
+    [...LEFT_BUILD,...MID_BUILD].forEach(i => updateCountdown(`bcd-remaining-${i}`,`bcd-finish-${i}`,`bdays-${i}`,`bhour-${i}`,`bmin-${i}`,`cat_s_p${currentPage}_b${i}`));
+    for (let i=0; i<EVO_COUNT; i++) updateCountdown(`ecd-remaining-${i}`,`ecd-finish-${i}`,`edays-${i}`,`ehour-${i}`,`emin-${i}`,`cat_s_p${currentPage}_e${i}`);
   }, 1000);
 
   setInterval(() => updateSlotBar(), 60000);

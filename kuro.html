@@ -7,6 +7,7 @@
   v0.3  2026.03.19  パターンA左ボーダーアクセント・スロット個別/一括折りたたみ(ダッシュボード表示)・ページ切替時の入力クリア修正
   v0.4  2026.03.19  フォントサイズ引き上げ・ヘッダー1行化・日付表示追加（チャトラ準拠）
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
+  v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -398,6 +399,12 @@ body {
 .pts-unit-btn.active-k { color: var(--accent); border-color: var(--accent); background: var(--surface2); }
 .pts-unit-btn.active-m { color: var(--r3-color); border-color: var(--r3-color); background: var(--surface2); }
 .pts-label { font-size: var(--sz-sm); color: var(--text-dim); }
+.clear-btn {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: var(--sz-sm); padding: 4px 8px;
+  cursor: pointer; transition: color 0.15s, border-color 0.15s; flex-shrink: 0;
+}
+.clear-btn:hover { color: var(--r3-color); border-color: var(--r3-color); }
 
 .reward-rows { display: flex; flex-direction: column; gap: 8px; }
 .reward-row  { display: flex; align-items: center; gap: 8px; }
@@ -520,7 +527,7 @@ body {
 <div class="header">
   <div class="header-left">
     <span class="header-icon">🐈‍⬛</span>
-    <div class="header-title">🐈‍⬛ Colony Action Tool [simulator]</div>
+    <div class="header-title">Colony Action Tool [simulator]</div>
   </div>
   <div class="header-right">
     <div class="clock-wrap">
@@ -599,6 +606,7 @@ body {
         <input class="current-pts-input" id="current-pts" type="number" min="0" step="any" placeholder="現在pt" oninput="onCurrentPtsInput()">
         <button class="pts-unit-btn active-k" id="pts-unit-btn" onclick="togglePtsUnit()">K</button>
         <span class="pts-label">pt</span>
+        <button class="clear-btn" onclick="clearCurrentPts()">✕</button>
       </div>
       <div class="reward-rows">
         <div class="reward-row">
@@ -648,7 +656,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 19 '26 🐈‍⬛ v0.4.1</div>
+<div class="version-label">Mar 19 '26 🐈‍⬛ v0.4.2</div>
 
 <script>
 // ============================================================
@@ -893,19 +901,22 @@ function updateHatchSection() {
   const el = document.getElementById('hatch-rows');
   el.innerHTML = '';
   if (!tasks.length) { el.innerHTML = '<div class="no-task">現在のスロットに孵化タスクがありません</div>'; return; }
+  const savedLv = (() => { try { return localStorage.getItem('cat_s_hatch_level'); } catch(e) { return null; } })();
   const options = tasks.map(t => {
     const m = t.label.match(/レベル(\d+)/);
-    return `<option value="${t.points}">Lv${m?m[1]:'?'}（${t.points}pt/匹）</option>`;
+    const selected = savedLv === String(t.points) ? ' selected' : '';
+    return `<option value="${t.points}"${selected}>Lv${m?m[1]:'?'}（${t.points}pt/匹）</option>`;
   }).join('');
   const row = document.createElement('div');
   row.className = 'hatch-row';
   row.innerHTML = `
-    <select class="hatch-select" id="hatch-level-sel" onchange="calcAll()">${options}</select>
+    <select class="hatch-select" id="hatch-level-sel" onchange="saveHatchLevel();calcAll()">${options}</select>
     <select class="hatch-target-select" id="hatch-target-sel" onchange="calcAll()">
       <option value="r1">R1</option><option value="r2">R2</option><option value="r3" selected>R3</option>
     </select>
     <span class="hatch-result" id="hatch-result">—</span>
     <span class="unit-label">匹</span>
+    <button class="clear-btn" onclick="clearHatchResult()">✕</button>
   `;
   el.appendChild(row);
 }
@@ -947,6 +958,27 @@ function getBpVal(numId, unitId) {
 // ============================================================
 // 現在ポイント K/Mトグル
 // ============================================================
+function fmtHatch(n) {
+  if (n >= 1000) return (Math.ceil(n / 100) / 10).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function saveHatchLevel() {
+  const el = document.getElementById('hatch-level-sel');
+  if (!el) return;
+  try { localStorage.setItem('cat_s_hatch_level', el.value); } catch(e) {}
+}
+
+function clearCurrentPts() {
+  document.getElementById('current-pts').value = '';
+  saveCurrentPts(); calcAll();
+}
+
+function clearHatchResult() {
+  document.getElementById('current-pts').value = '';
+  saveCurrentPts(); calcAll();
+}
+
 function togglePtsUnit() {
   ptsUnit = ptsUnit==='K' ? 'M' : 'K';
   const btn = document.getElementById('pts-unit-btn');
@@ -1200,7 +1232,7 @@ function calcAll() {
       const hPts=parseInt(hLvEl.value)||0;
       const remain=Math.max(0,th[hTgEl.value]-pts);
       if (remain===0) { hRsEl.textContent='達成済'; hRsEl.className='hatch-result achieved'; }
-      else if (hPts>0) { hRsEl.textContent=fmtNum(Math.ceil(remain/hPts)); hRsEl.className='hatch-result'; }
+      else if (hPts>0) { hRsEl.textContent=fmtHatch(Math.ceil(remain/hPts)); hRsEl.className='hatch-result'; }
     }
   }
   let total=0, cnt=0;

@@ -9,7 +9,7 @@
       "https://lilygamelife.com/the-ants-event-calendar/",
       "https://manimany.net/157"
     ],
-    "version": "260316"
+    "version": "260320"
   },
   "reward_thresholds": {
     "note": "女王Lv25のリワード必要ポイント。時間帯によって異なる。",
@@ -1599,8 +1599,44 @@
           "premium_transfer": true,
           "tasks": [
             {
-              "label": "使った加速アイテム時間が1分毎に",
+              "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に",
               "points": 400
+            },
+            {
+              "label": "進化する時に使った加速アイテム時間が1分毎に",
+              "points": 400
+            },
+            {
+              "label": "建設LvUP時に使った加速アイテム時間が1分毎に",
+              "points": 400
+            },
+            {
+              "label": "一つ生命エッセンスを消耗",
+              "points": 25000
+            },
+            {
+              "label": "一つ遺伝物質Ⅳを消耗",
+              "points": 10000
+            },
+            {
+              "label": "一つ遺伝物質Ⅲを消耗",
+              "points": 4000
+            },
+            {
+              "label": "一つ遺伝物質Ⅱを消耗",
+              "points": 1000
+            },
+            {
+              "label": "一つ遺伝物質Ⅰを消耗",
+              "points": 200
+            },
+            {
+              "label": "１つ高等DNAを消耗します",
+              "points": 10000
+            },
+            {
+              "label": "１つDNAを消耗します",
+              "points": 2000
             }
           ]
         },

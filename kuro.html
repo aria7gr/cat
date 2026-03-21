@@ -9,6 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
+  v0.5    2026.03.21  残り時間↔完成時刻（月/日/時）入力切替・加速逆算をX日X時間X分形式に変更（fmtMins既存）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -203,7 +204,35 @@ body {
   justify-content: space-between;
 }
 
-/* 一括開閉ボタン */
+/* 残り時間/完成時刻モード切替 */
+.time-mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+.time-mode-btn {
+  flex: 1;
+  padding: 3px 0;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font-main);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.time-mode-btn.active { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
+
+/* 完成時刻入力欄 */
+.finish-input-row { display: flex; align-items: center; gap: 4px; }
+.finish-num-input {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 5px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
+  outline: none; transition: border-color 0.15s; text-align: center;
+}
+.finish-num-input:focus { border-color: var(--accent); }
+.finish-num-input::placeholder { color: var(--text-dim); opacity: 0.45; font-size: 12px; }
 .toggle-all-btn {
   font-size: 11px; color: var(--text-dim); background: none;
   border: 1px solid var(--border); border-radius: 4px;
@@ -684,7 +713,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 20 '26 🐈‍⬛ v0.4.3</div>
+<div class="version-label">Mar 21 '26 🐈‍⬛ v0.5</div>
 
 <script>
 // ============================================================
@@ -1139,18 +1168,35 @@ function buildBuildSlotHTML(i) {
             <span class="ca-convert-label">CA換算</span>
             <span class="ca-convert-val empty" id="bcaval-${i}">—</span>
           </div>
-          <div class="quick-input-row">
-            <span class="quick-label">残り時間</span>
-            <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','${sk}');onBuildInput(${i})">
+          <div class="time-mode-toggle">
+            <button class="time-mode-btn active" id="btmode-remain-${i}" onclick="switchTimeMode(${i},'remain')">残り時間</button>
+            <button class="time-mode-btn" id="btmode-finish-${i}" onclick="switchTimeMode(${i},'finish')">完成時刻</button>
           </div>
-          <div class="field-row">
-            <span class="field-label"></span>
-            <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
-            <span class="unit-label">日</span>
-            <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-            <span class="unit-label">時</span>
-            <input class="bp-num-input" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-            <span class="unit-label">分</span>
+          <div id="bremain-area-${i}">
+            <div class="quick-input-row">
+              <span class="quick-label">残り時間</span>
+              <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','${sk}');onBuildInput(${i})">
+            </div>
+            <div class="field-row">
+              <span class="field-label"></span>
+              <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
+              <span class="unit-label">日</span>
+              <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <span class="unit-label">時</span>
+              <input class="bp-num-input" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <span class="unit-label">分</span>
+            </div>
+          </div>
+          <div id="bfinish-area-${i}" style="display:none;">
+            <div class="finish-input-row">
+              <span class="field-label">完成時刻</span>
+              <input class="finish-num-input" id="bfmo-${i}" type="number" min="1" max="12" placeholder="月" style="width:44px;" oninput="onFinishTimeInput(${i},'b')">
+              <span class="unit-label">月</span>
+              <input class="finish-num-input" id="bfda-${i}" type="number" min="1" max="31" placeholder="日" style="width:44px;" oninput="onFinishTimeInput(${i},'b')">
+              <span class="unit-label">日</span>
+              <input class="finish-num-input" id="bfhr-${i}" type="number" min="0" max="23" placeholder="時" style="width:44px;" oninput="onFinishTimeInput(${i},'b')">
+              <span class="unit-label">時</span>
+            </div>
           </div>
         </div>
         <textarea class="slot-memo" id="bmemo-${i}" rows="2" placeholder="メモ" oninput="updateMemoPreview(${i});saveAllSlots()"></textarea>
@@ -1199,18 +1245,35 @@ function buildEvoSlotHTML(i) {
             <span class="field-label">+BP</span>
             <span class="field-result empty" id="ediff-${i}">—</span>
           </div>
-          <div class="quick-input-row">
-            <span class="quick-label">残り時間</span>
-            <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','${sk}');saveAllSlots()">
+          <div class="time-mode-toggle">
+            <button class="time-mode-btn active" id="etmode-remain-${i}" onclick="switchTimeMode(${i},'remain','e')">残り時間</button>
+            <button class="time-mode-btn" id="etmode-finish-${i}" onclick="switchTimeMode(${i},'finish','e')">完成時刻</button>
           </div>
-          <div class="field-row">
-            <span class="field-label"></span>
-            <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
-            <span class="unit-label">日</span>
-            <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-            <span class="unit-label">時</span>
-            <input class="bp-num-input" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
-            <span class="unit-label">分</span>
+          <div id="eremain-area-${i}">
+            <div class="quick-input-row">
+              <span class="quick-label">残り時間</span>
+              <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','${sk}');saveAllSlots()">
+            </div>
+            <div class="field-row">
+              <span class="field-label"></span>
+              <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
+              <span class="unit-label">日</span>
+              <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <span class="unit-label">時</span>
+              <input class="bp-num-input" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <span class="unit-label">分</span>
+            </div>
+          </div>
+          <div id="efinish-area-${i}" style="display:none;">
+            <div class="finish-input-row">
+              <span class="field-label">完成時刻</span>
+              <input class="finish-num-input" id="efmo-${i}" type="number" min="1" max="12" placeholder="月" style="width:44px;" oninput="onFinishTimeInput(${i},'e')">
+              <span class="unit-label">月</span>
+              <input class="finish-num-input" id="efda-${i}" type="number" min="1" max="31" placeholder="日" style="width:44px;" oninput="onFinishTimeInput(${i},'e')">
+              <span class="unit-label">日</span>
+              <input class="finish-num-input" id="efhr-${i}" type="number" min="0" max="23" placeholder="時" style="width:44px;" oninput="onFinishTimeInput(${i},'e')">
+              <span class="unit-label">時</span>
+            </div>
           </div>
         </div>
         <textarea class="slot-memo" id="ememo-${i}" rows="2" placeholder="メモ" oninput="updateEvoMemoPreview(${i});saveAllSlots()"></textarea>
@@ -1315,8 +1378,49 @@ function calcAll() {
 }
 
 // ============================================================
-// 折りたたみ制御
+// 残り時間 ↔ 完成時刻 切替
 // ============================================================
+function switchTimeMode(idx, mode, prefix) {
+  prefix = prefix || 'b';
+  const remainArea  = document.getElementById(`${prefix}remain-area-${idx}`);
+  const finishArea  = document.getElementById(`${prefix}finish-area-${idx}`);
+  const btnRemain   = document.getElementById(`${prefix}tmode-remain-${idx}`);
+  const btnFinish   = document.getElementById(`${prefix}tmode-finish-${idx}`);
+  if (!remainArea) return;
+  const isFinish = mode === 'finish';
+  remainArea.style.display = isFinish ? 'none' : 'block';
+  finishArea.style.display = isFinish ? 'block' : 'none';
+  btnRemain.classList.toggle('active', !isFinish);
+  btnFinish.classList.toggle('active', isFinish);
+  saveAllSlots();
+}
+
+function onFinishTimeInput(idx, prefix) {
+  prefix = prefix || 'b';
+  const mo  = parseInt(document.getElementById(`${prefix}fmo-${idx}`)?.value) || 0;
+  const da  = parseInt(document.getElementById(`${prefix}fda-${idx}`)?.value) || 0;
+  const hr  = parseInt(document.getElementById(`${prefix}fhr-${idx}`)?.value) || 0;
+  if (!mo || !da) return;
+
+  const now = new Date();
+  let year = now.getFullYear();
+  // 月が過去になる場合は翌年扱い
+  const target = new Date(year, mo-1, da, hr, 0, 0);
+  if (target <= now) target.setFullYear(year + 1);
+
+  const diffSecs = Math.max(0, Math.floor((target - now) / 1000));
+  const dd = Math.floor(diffSecs / 86400);
+  const hh = Math.floor((diffSecs % 86400) / 3600);
+  const mm = Math.floor((diffSecs % 3600) / 60);
+
+  // 残り時間欄に反映・起点リセット
+  const startKey = `cat_s_p${currentPage}_${prefix}${idx}`;
+  document.getElementById(`${prefix}days-${idx}`).value = dd;
+  document.getElementById(`${prefix}hour-${idx}`).value = hh;
+  document.getElementById(`${prefix}min-${idx}`).value  = mm;
+  try { localStorage.removeItem(startKey); localStorage.removeItem(startKey+'_total'); } catch(e) {}
+  saveAllSlots();
+}
 function toggleSlot(cardId, bodyId, arrowId) {
   const body  = document.getElementById(bodyId);
   const arrow = document.getElementById(arrowId);

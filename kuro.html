@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.5    2026.03.21  残り時間↔完成時刻（月/日/時）入力切替・加速逆算をX日X時間X分形式に変更（fmtMins既存）
+  v0.6    2026.03.21  日時分に+/-ボタン追加・クイック入力リセット・BP欄リセット・完成後BP引き継ぎボタン
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -392,6 +392,48 @@ body {
 .bp-unit-btn.active-k { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
 .bp-unit-btn.active-m { background: var(--surface2); color: var(--r3-color); border-color: var(--r3-color); }
 
+/* BP引き継ぎ・リセットボタン */
+.bp-carry-btn {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 13px; padding: 0 5px; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s; flex-shrink: 0; line-height: 1;
+}
+.bp-carry-btn:hover { color: var(--accent); border-color: var(--accent); }
+.bp-reset-btn {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 11px; padding: 0 5px; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s; flex-shrink: 0;
+}
+.bp-reset-btn:hover { color: var(--r3-color); border-color: var(--r3-color); }
+
+/* +/-ボタン（日時分） */
+.inc-dec-wrap { display: flex; align-items: center; gap: 2px; }
+.inc-dec-num {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 5px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
+  outline: none; transition: border-color 0.15s; text-align: center;
+  -moz-appearance: textfield;
+}
+.inc-dec-num::-webkit-inner-spin-button,
+.inc-dec-num::-webkit-outer-spin-button { -webkit-appearance: none; }
+.inc-dec-num:focus { border-color: var(--accent); }
+.inc-dec-btn {
+  background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 13px; width: 24px; height: 28px;
+  cursor: pointer; flex-shrink: 0; line-height: 1;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.inc-dec-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--surface2); }
+
+/* クイック入力リセット */
+.quick-reset-btn {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 11px; padding: 3px 6px; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s; flex-shrink: 0;
+}
+.quick-reset-btn:hover { color: var(--r3-color); border-color: var(--r3-color); }
+
 .ca-convert-row { display: flex; align-items: center; gap: 5px; padding: 2px 5px; background: var(--bg); border-radius: 4px; }
 .ca-convert-label { font-size: 11px; color: var(--text-dim); }
 .ca-convert-val { font-family: var(--font-mono); font-size: 12px; color: var(--green); font-weight: 500; }
@@ -713,7 +755,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 21 '26 🐈‍⬛ v0.5</div>
+<div class="version-label">Mar 21 '26 🐈‍⬛ v0.6</div>
 
 <script>
 // ============================================================
@@ -1151,6 +1193,7 @@ function buildBuildSlotHTML(i) {
             <div class="bp-input-wrap">
               <input class="bp-num-input" id="bcur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
               <button class="bp-unit-btn active-k" id="bcur-u-${i}" onclick="toggleBpUnit('bcur-u-${i}','bnew-u-${i}')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'cur')">✕</button>
             </div>
           </div>
           <div class="field-row">
@@ -1158,7 +1201,9 @@ function buildBuildSlotHTML(i) {
             <div class="bp-input-wrap">
               <input class="bp-num-input" id="bnew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onBuildInput(${i})">
               <button class="bp-unit-btn active-k" id="bnew-u-${i}" onclick="toggleBpUnit('bnew-u-${i}','bcur-u-${i}')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'new')">✕</button>
             </div>
+            <button class="bp-carry-btn" title="完成後BPを現在BPに引き継ぐ" onclick="carryBp(${i})">↑</button>
           </div>
           <div class="field-row">
             <span class="field-label">+BP</span>
@@ -1174,16 +1219,29 @@ function buildBuildSlotHTML(i) {
           </div>
           <div id="bremain-area-${i}">
             <div class="quick-input-row">
-              <span class="quick-label">残り時間</span>
+              <span class="quick-label">入力</span>
               <input class="quick-input" id="bquick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('bquick-${i}','bdays-${i}','bhour-${i}','bmin-${i}','${sk}');onBuildInput(${i})">
+              <button class="quick-reset-btn" onclick="resetTimeFields(${i},'b')">✕</button>
             </div>
-            <div class="field-row">
+            <div class="field-row" style="margin-top:3px;">
               <span class="field-label"></span>
-              <input class="bp-num-input" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
+              <div class="inc-dec-wrap">
+                <button class="inc-dec-btn" onclick="incDec('bdays-${i}',-1,'b${i}')">−</button>
+                <input class="inc-dec-num" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:38px;" oninput="saveAllSlots()">
+                <button class="inc-dec-btn" onclick="incDec('bdays-${i}',1,'b${i}')">+</button>
+              </div>
               <span class="unit-label">日</span>
-              <input class="bp-num-input" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <div class="inc-dec-wrap">
+                <button class="inc-dec-btn" onclick="incDec('bhour-${i}',-1,'b${i}',0,23)">−</button>
+                <input class="inc-dec-num" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <button class="inc-dec-btn" onclick="incDec('bhour-${i}',1,'b${i}',0,23)">+</button>
+              </div>
               <span class="unit-label">時</span>
-              <input class="bp-num-input" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <div class="inc-dec-wrap">
+                <button class="inc-dec-btn" onclick="incDec('bmin-${i}',-1,'b${i}',0,59)">−</button>
+                <input class="inc-dec-num" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <button class="inc-dec-btn" onclick="incDec('bmin-${i}',1,'b${i}',0,59)">+</button>
+              </div>
               <span class="unit-label">分</span>
             </div>
           </div>
@@ -1232,6 +1290,7 @@ function buildEvoSlotHTML(i) {
             <div class="bp-input-wrap">
               <input class="bp-num-input" id="ecur-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
               <button class="bp-unit-btn active-k" id="ecur-u-${i}" onclick="toggleBpUnit('ecur-u-${i}','enew-u-${i}')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'ecur')">✕</button>
             </div>
           </div>
           <div class="field-row">
@@ -1239,7 +1298,9 @@ function buildEvoSlotHTML(i) {
             <div class="bp-input-wrap">
               <input class="bp-num-input" id="enew-${i}" type="number" min="0" step="any" placeholder="数値" oninput="onEvoInput(${i})">
               <button class="bp-unit-btn active-k" id="enew-u-${i}" onclick="toggleBpUnit('enew-u-${i}','ecur-u-${i}')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'enew')">✕</button>
             </div>
+            <button class="bp-carry-btn" title="完成後BPを現在BPに引き継ぐ" onclick="carryEvoBp(${i})">↑</button>
           </div>
           <div class="field-row">
             <span class="field-label">+BP</span>
@@ -1251,16 +1312,29 @@ function buildEvoSlotHTML(i) {
           </div>
           <div id="eremain-area-${i}">
             <div class="quick-input-row">
-              <span class="quick-label">残り時間</span>
+              <span class="quick-label">入力</span>
               <input class="quick-input" id="equick-${i}" type="text" placeholder="dd:hh:mm" oninput="onQuickInput('equick-${i}','edays-${i}','ehour-${i}','emin-${i}','${sk}');saveAllSlots()">
+              <button class="quick-reset-btn" onclick="resetTimeFields(${i},'e')">✕</button>
             </div>
-            <div class="field-row">
+            <div class="field-row" style="margin-top:3px;">
               <span class="field-label"></span>
-              <input class="bp-num-input" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:42px;flex:none;" oninput="saveAllSlots()">
+              <div class="inc-dec-wrap">
+                <button class="inc-dec-btn" onclick="incDec('edays-${i}',-1,'e${i}')">−</button>
+                <input class="inc-dec-num" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:38px;" oninput="saveAllSlots()">
+                <button class="inc-dec-btn" onclick="incDec('edays-${i}',1,'e${i}')">+</button>
+              </div>
               <span class="unit-label">日</span>
-              <input class="bp-num-input" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <div class="inc-dec-wrap">
+                <button class="inc-dec-btn" onclick="incDec('ehour-${i}',-1,'e${i}',0,23)">−</button>
+                <input class="inc-dec-num" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <button class="inc-dec-btn" onclick="incDec('ehour-${i}',1,'e${i}',0,23)">+</button>
+              </div>
               <span class="unit-label">時</span>
-              <input class="bp-num-input" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:38px;flex:none;" oninput="saveAllSlots()">
+              <div class="inc-dec-wrap">
+                <button class="inc-dec-btn" onclick="incDec('emin-${i}',-1,'e${i}',0,59)">−</button>
+                <input class="inc-dec-num" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <button class="inc-dec-btn" onclick="incDec('emin-${i}',1,'e${i}',0,59)">+</button>
+              </div>
               <span class="unit-label">分</span>
             </div>
           </div>
@@ -1378,8 +1452,67 @@ function calcAll() {
 }
 
 // ============================================================
-// 残り時間 ↔ 完成時刻 切替
+// +/-ボタン・BP引き継ぎ・リセット
 // ============================================================
+function incDec(inputId, delta, startKey, min, max) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  let v = parseInt(el.value) || 0;
+  v += delta;
+  if (min !== undefined) v = Math.max(min, v);
+  if (max !== undefined) v = Math.min(max, v);
+  if (v < 0) v = 0;
+  el.value = v;
+  // 起点リセット
+  const sk = `cat_s_p${currentPage}_${startKey}`;
+  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e) {}
+  saveAllSlots();
+}
+
+function resetBpField(idx, field) {
+  // field は 'cur'/'new' (建築) or 'ecur'/'enew' (進化)
+  const isEvo = field.startsWith('e');
+  if (isEvo) {
+    const f = field.replace('e','');
+    document.getElementById(`e${f}-${idx}`).value = '';
+    onEvoInput(idx);
+  } else {
+    document.getElementById(`b${field}-${idx}`).value = '';
+    onBuildInput(idx);
+  }
+}
+
+function carryBp(idx) {
+  const newNum  = document.getElementById(`bnew-${idx}`)?.value;
+  const newUnit = document.getElementById(`bnew-u-${idx}`)?.textContent;
+  if (!newNum) return;
+  document.getElementById(`bcur-${idx}`).value = newNum;
+  setUnitBtn(`bcur-u-${idx}`, newUnit);
+  setUnitBtn(`bnew-u-${idx}`, newUnit);
+  document.getElementById(`bnew-${idx}`).value = '';
+  onBuildInput(idx);
+}
+
+function carryEvoBp(idx) {
+  const newNum  = document.getElementById(`enew-${idx}`)?.value;
+  const newUnit = document.getElementById(`enew-u-${idx}`)?.textContent;
+  if (!newNum) return;
+  document.getElementById(`ecur-${idx}`).value = newNum;
+  setUnitBtn(`ecur-u-${idx}`, newUnit);
+  setUnitBtn(`enew-u-${idx}`, newUnit);
+  document.getElementById(`enew-${idx}`).value = '';
+  onEvoInput(idx);
+}
+
+function resetTimeFields(idx, prefix) {
+  prefix = prefix || 'b';
+  [`${prefix}quick-${idx}`,`${prefix}days-${idx}`,`${prefix}hour-${idx}`,`${prefix}min-${idx}`].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const sk = `cat_s_p${currentPage}_${prefix}${idx}`;
+  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e) {}
+  saveAllSlots();
+}
 function switchTimeMode(idx, mode, prefix) {
   prefix = prefix || 'b';
   const remainArea  = document.getElementById(`${prefix}remain-area-${idx}`);

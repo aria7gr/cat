@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.6    2026.03.21  日時分に+/-ボタン追加・クイック入力リセット・BP欄リセット・完成後BP引き継ぎボタン
+  v0.6.1  2026.03.22  完成予定時刻保存方式に変更・+/-後即時更新・ダブルタップズーム防止
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -62,6 +62,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  touch-action: manipulation;
 }
 
 /* ============================================================ ヘッダー */
@@ -755,7 +756,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 21 '26 🐈‍⬛ v0.6</div>
+<div class="version-label">Mar 22 '26 🐈‍⬛ v0.6.1</div>
 
 <script>
 // ============================================================
@@ -1118,15 +1119,23 @@ function updateCountdown(remainingId, finishId, daysId, hourId, minId, startKey)
     if (finishEl) finishEl.textContent = '';
     return;
   }
-  let startTime;
-  try {
-    const stored = localStorage.getItem(startKey);
-    const savedTotal = parseInt(localStorage.getItem(startKey+'_total')||'0');
-    if (stored && savedTotal === totalSecs) { startTime = parseInt(stored); }
-    else { startTime = Date.now(); localStorage.setItem(startKey, startTime); localStorage.setItem(startKey+'_total', totalSecs); }
-  } catch(e) { startTime = Date.now(); }
 
-  const remaining = Math.max(0, totalSecs - Math.floor((Date.now()-startTime)/1000));
+  // 完成予定時刻（絶対時刻）で保存・参照
+  const finishKey = startKey + '_finish';
+  let finishTime;
+  try {
+    const stored = parseInt(localStorage.getItem(finishKey)||'0');
+    const savedTotal = parseInt(localStorage.getItem(startKey+'_total')||'0');
+    if (stored && savedTotal === totalSecs) {
+      finishTime = stored;
+    } else {
+      finishTime = Date.now() + totalSecs * 1000;
+      localStorage.setItem(finishKey, finishTime);
+      localStorage.setItem(startKey+'_total', totalSecs);
+    }
+  } catch(e) { finishTime = Date.now() + totalSecs * 1000; }
+
+  const remaining = Math.max(0, Math.floor((finishTime - Date.now()) / 1000));
   const cdClass = getCdClass(remaining);
 
   if (remaining === 0) {
@@ -1145,7 +1154,7 @@ function updateCountdown(remainingId, finishId, daysId, hourId, minId, startKey)
   remainEl.className = `slot-cd-remaining ${cdClass}`;
 
   if (finishEl) {
-    const ft = new Date(startTime + totalSecs*1000);
+    const ft = new Date(finishTime);
     const mo = ft.getMonth()+1, fd = ft.getDate(), dw = DAY_LABELS[ft.getDay()];
     const fh = String(ft.getHours()).padStart(2,'0'), fm = String(ft.getMinutes()).padStart(2,'0');
     finishEl.textContent = `完成：${mo}/${fd}(${dw}) ${fh}:${fm}`;
@@ -1159,7 +1168,7 @@ function onQuickInput(quickId, daysId, hourId, minId, startKey) {
     document.getElementById(daysId).value = parseInt(parts[0])||0;
     document.getElementById(hourId).value = parseInt(parts[1])||0;
     document.getElementById(minId).value  = parseInt(parts[2])||0;
-    try { localStorage.removeItem(startKey); localStorage.removeItem(startKey+'_total'); } catch(e){}
+    try { localStorage.removeItem(startKey+'_finish'); localStorage.removeItem(startKey+'_total'); } catch(e){}
   }
   saveAllSlots();
 }
@@ -1454,7 +1463,7 @@ function calcAll() {
 // ============================================================
 // +/-ボタン・BP引き継ぎ・リセット
 // ============================================================
-function incDec(inputId, delta, startKey, min, max) {
+function incDec(inputId, delta, slotKey, min, max) {
   const el = document.getElementById(inputId);
   if (!el) return;
   let v = parseInt(el.value) || 0;
@@ -1463,10 +1472,18 @@ function incDec(inputId, delta, startKey, min, max) {
   if (max !== undefined) v = Math.min(max, v);
   if (v < 0) v = 0;
   el.value = v;
-  // 起点リセット
-  const sk = `cat_s_p${currentPage}_${startKey}`;
-  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e) {}
+  // 完成予定時刻をリセットして再計算
+  const prefix = slotKey[0]; // 'b' or 'e'
+  const idx    = slotKey.slice(1);
+  const sk = `cat_s_p${currentPage}_${prefix}${idx}`;
+  try { localStorage.removeItem(sk+'_finish'); localStorage.removeItem(sk+'_total'); } catch(e) {}
   saveAllSlots();
+  // カウントダウン即時更新
+  updateCountdown(
+    `${prefix}cd-remaining-${idx}`, `${prefix}cd-finish-${idx}`,
+    `${prefix}days-${idx}`, `${prefix}hour-${idx}`, `${prefix}min-${idx}`,
+    sk
+  );
 }
 
 function resetBpField(idx, field) {
@@ -1510,7 +1527,7 @@ function resetTimeFields(idx, prefix) {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   const sk = `cat_s_p${currentPage}_${prefix}${idx}`;
-  try { localStorage.removeItem(sk); localStorage.removeItem(sk+'_total'); } catch(e) {}
+  try { localStorage.removeItem(sk+'_finish'); localStorage.removeItem(sk+'_total'); } catch(e) {}
   saveAllSlots();
 }
 function switchTimeMode(idx, mode, prefix) {

@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.6.1  2026.03.22  完成予定時刻保存方式に変更・+/-後即時更新・ダブルタップズーム防止
+  v0.6.2  2026.03.22  一括ペーストをポップアップ方式フォールバック対応（PC/スマホ両対応）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -602,6 +602,38 @@ body {
   color: var(--text-dim); opacity: 0.5; pointer-events: none; font-family: var(--font-main);
 }
 
+/* ペースト用ポップアップ */
+.paste-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 500;
+}
+.paste-dialog {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 16px; width: 90%; max-width: 400px;
+}
+.paste-dialog-title {
+  font-size: var(--sz-sm); font-weight: 700; color: var(--accent);
+  margin-bottom: 10px; letter-spacing: 0.06em;
+}
+.paste-textarea {
+  width: 100%; height: 100px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 5px;
+  padding: 8px; color: var(--text); font-family: var(--font-mono);
+  font-size: 13px; outline: none; resize: none; transition: border-color 0.15s;
+}
+.paste-textarea:focus { border-color: var(--accent); }
+.paste-dialog-btns { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+.paste-ok-btn {
+  background: var(--accent); color: var(--bg); border: none;
+  border-radius: 5px; padding: 7px 18px; font-family: var(--font-main);
+  font-size: var(--sz-sm); font-weight: 700; cursor: pointer;
+}
+.paste-cancel-btn {
+  background: none; border: 1px solid var(--border); border-radius: 5px;
+  padding: 7px 14px; font-family: var(--font-main); font-size: var(--sz-sm);
+  color: var(--text-dim); cursor: pointer;
+}
+
 /* ============================================================ スマホ */
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
@@ -756,7 +788,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 22 '26 🐈‍⬛ v0.6.1</div>
+<div class="version-label">Mar 22 '26 🐈‍⬛ v0.6.2</div>
 
 <script>
 // ============================================================
@@ -1706,32 +1738,63 @@ function bulkCopy(col) {
 
 function bulkPaste(col) {
   navigator.clipboard.readText().then(text => {
-    try {
-      const data = JSON.parse(text);
-      if (col === 'left' && data.type === 'cat_s_left') {
-        (data.build||[]).forEach((d,idx) => {
-          const i = LEFT_BUILD[idx];
-          if (i === undefined) return;
-          applyBuildSlotData(i, d);
-        });
-      } else if (col === 'mid' && data.type === 'cat_s_mid') {
-        (data.build||[]).forEach((d,idx) => {
-          const i = MID_BUILD[idx];
-          if (i === undefined) return;
-          applyBuildSlotData(i, d);
-        });
-        (data.evo||[]).forEach((d,i) => applyEvoSlotData(i, d));
-      } else {
-        alert('この列のデータではありません。');
-        return;
-      }
-      saveAllSlots(); calcAll();
-      const btn = event.target;
+    applyPasteText(text, col, event.target);
+  }).catch(() => {
+    // クリップボードAPI失敗時はポップアップを表示
+    showPasteDialog(col);
+  });
+}
+
+function showPasteDialog(col) {
+  const overlay = document.createElement('div');
+  overlay.className = 'paste-overlay';
+  overlay.innerHTML = `
+    <div class="paste-dialog">
+      <div class="paste-dialog-title">データをここに貼り付けてください</div>
+      <textarea class="paste-textarea" id="paste-textarea-input" placeholder="コピーしたデータをCtrl+V / 長押しで貼り付け"></textarea>
+      <div class="paste-dialog-btns">
+        <button class="paste-cancel-btn" onclick="this.closest('.paste-overlay').remove()">キャンセル</button>
+        <button class="paste-ok-btn" onclick="confirmPaste('${col}', this)">確定</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.querySelector('textarea').focus(), 100);
+}
+
+function confirmPaste(col, btn) {
+  const text = document.getElementById('paste-textarea-input')?.value || '';
+  btn.closest('.paste-overlay').remove();
+  applyPasteText(text, col, null);
+}
+
+function applyPasteText(text, col, btn) {
+  try {
+    const data = JSON.parse(text);
+    if (col === 'left' && data.type === 'cat_s_left') {
+      (data.build||[]).forEach((d,idx) => {
+        const i = LEFT_BUILD[idx];
+        if (i === undefined) return;
+        applyBuildSlotData(i, d); updateMemoPreview(i);
+      });
+    } else if (col === 'mid' && data.type === 'cat_s_mid') {
+      (data.build||[]).forEach((d,idx) => {
+        const i = MID_BUILD[idx];
+        if (i === undefined) return;
+        applyBuildSlotData(i, d); updateMemoPreview(i);
+      });
+      (data.evo||[]).forEach((d,i) => { applyEvoSlotData(i, d); updateEvoMemoPreview(i); });
+    } else {
+      alert('この列のデータではありません。');
+      return;
+    }
+    saveAllSlots(); calcAll();
+    if (btn) {
       const orig = btn.textContent;
       btn.textContent = '✓ ペースト完了';
       setTimeout(() => btn.textContent = orig, 1500);
-    } catch(e) { alert('ペーストに失敗しました。形式が正しくない可能性があります。'); }
-  }).catch(() => alert('クリップボードの読み取りに失敗しました。'));
+    }
+  } catch(e) { alert('ペーストに失敗しました。形式が正しくない可能性があります。'); }
 }
 
 function applyBuildSlotData(i, d) {

@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.6.2  2026.03.22  一括ペーストをポップアップ方式フォールバック対応（PC/スマホ両対応）
+  v0.6.3  2026.03.22  ペーストを常時ポップアップ方式に変更（Firefox対応）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -788,7 +788,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 22 '26 🐈‍⬛ v0.6.2</div>
+<div class="version-label">Mar 22 '26 🐈‍⬛ v0.6.3</div>
 
 <script>
 // ============================================================
@@ -1737,12 +1737,7 @@ function bulkCopy(col) {
 }
 
 function bulkPaste(col) {
-  navigator.clipboard.readText().then(text => {
-    applyPasteText(text, col, event.target);
-  }).catch(() => {
-    // クリップボードAPI失敗時はポップアップを表示
-    showPasteDialog(col);
-  });
+  showPasteDialog(col);
 }
 
 function showPasteDialog(col) {

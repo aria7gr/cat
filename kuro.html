@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.6.3  2026.03.22  ペーストを常時ポップアップ方式に変更（Firefox対応）
+  v0.6.4  2026.03.23  メイン/サブ切替時のデータ消失バグ修正・+/-欄のはみ出し修正
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -411,7 +411,7 @@ body {
 .inc-dec-wrap { display: flex; align-items: center; gap: 2px; }
 .inc-dec-num {
   background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
-  padding: 3px 5px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
+  padding: 3px 2px; color: var(--text); font-family: var(--font-mono); font-size: 16px;
   outline: none; transition: border-color 0.15s; text-align: center;
   -moz-appearance: textfield;
 }
@@ -420,7 +420,7 @@ body {
 .inc-dec-num:focus { border-color: var(--accent); }
 .inc-dec-btn {
   background: var(--surface3); border: 1px solid var(--border); border-radius: 4px;
-  color: var(--text-dim); font-size: 13px; width: 24px; height: 28px;
+  color: var(--text-dim); font-size: 13px; width: 22px; height: 26px;
   cursor: pointer; flex-shrink: 0; line-height: 1;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
   display: flex; align-items: center; justify-content: center;
@@ -788,7 +788,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 22 '26 🐈‍⬛ v0.6.3</div>
+<div class="version-label">Mar 23 '26 🐈‍⬛ v0.6.4</div>
 
 <script>
 // ============================================================
@@ -1268,19 +1268,19 @@ function buildBuildSlotHTML(i) {
               <span class="field-label"></span>
               <div class="inc-dec-wrap">
                 <button class="inc-dec-btn" onclick="incDec('bdays-${i}',-1,'b${i}')">−</button>
-                <input class="inc-dec-num" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:38px;" oninput="saveAllSlots()">
+                <input class="inc-dec-num" id="bdays-${i}" type="number" min="0" step="1" placeholder="0" style="width:32px;" oninput="saveAllSlots()">
                 <button class="inc-dec-btn" onclick="incDec('bdays-${i}',1,'b${i}')">+</button>
               </div>
               <span class="unit-label">日</span>
               <div class="inc-dec-wrap">
                 <button class="inc-dec-btn" onclick="incDec('bhour-${i}',-1,'b${i}',0,23)">−</button>
-                <input class="inc-dec-num" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <input class="inc-dec-num" id="bhour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:28px;" oninput="saveAllSlots()">
                 <button class="inc-dec-btn" onclick="incDec('bhour-${i}',1,'b${i}',0,23)">+</button>
               </div>
               <span class="unit-label">時</span>
               <div class="inc-dec-wrap">
                 <button class="inc-dec-btn" onclick="incDec('bmin-${i}',-1,'b${i}',0,59)">−</button>
-                <input class="inc-dec-num" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <input class="inc-dec-num" id="bmin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:28px;" oninput="saveAllSlots()">
                 <button class="inc-dec-btn" onclick="incDec('bmin-${i}',1,'b${i}',0,59)">+</button>
               </div>
               <span class="unit-label">分</span>
@@ -1361,19 +1361,19 @@ function buildEvoSlotHTML(i) {
               <span class="field-label"></span>
               <div class="inc-dec-wrap">
                 <button class="inc-dec-btn" onclick="incDec('edays-${i}',-1,'e${i}')">−</button>
-                <input class="inc-dec-num" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:38px;" oninput="saveAllSlots()">
+                <input class="inc-dec-num" id="edays-${i}" type="number" min="0" step="1" placeholder="0" style="width:32px;" oninput="saveAllSlots()">
                 <button class="inc-dec-btn" onclick="incDec('edays-${i}',1,'e${i}')">+</button>
               </div>
               <span class="unit-label">日</span>
               <div class="inc-dec-wrap">
                 <button class="inc-dec-btn" onclick="incDec('ehour-${i}',-1,'e${i}',0,23)">−</button>
-                <input class="inc-dec-num" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <input class="inc-dec-num" id="ehour-${i}" type="number" min="0" max="23" step="1" placeholder="0" style="width:28px;" oninput="saveAllSlots()">
                 <button class="inc-dec-btn" onclick="incDec('ehour-${i}',1,'e${i}',0,23)">+</button>
               </div>
               <span class="unit-label">時</span>
               <div class="inc-dec-wrap">
                 <button class="inc-dec-btn" onclick="incDec('emin-${i}',-1,'e${i}',0,59)">−</button>
-                <input class="inc-dec-num" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:34px;" oninput="saveAllSlots()">
+                <input class="inc-dec-num" id="emin-${i}" type="number" min="0" max="59" step="1" placeholder="0" style="width:28px;" oninput="saveAllSlots()">
                 <button class="inc-dec-btn" onclick="incDec('emin-${i}',1,'e${i}',0,59)">+</button>
               </div>
               <span class="unit-label">分</span>
@@ -1872,7 +1872,6 @@ function loadAllSlots() {
 function switchPage(page) {
   currentPage = page;
   document.querySelectorAll('.page-tab').forEach((el,i) => el.classList.toggle('active', i===page));
-  // ページ切替時は入力欄をクリアしてから読み込む
   clearAllInputs();
   loadCurrentPts();
   loadAllSlots();
@@ -1880,22 +1879,30 @@ function switchPage(page) {
 }
 
 function clearAllInputs() {
+  // UIのみリセット。saveAllSlotsを呼ばない
   [...LEFT_BUILD,...MID_BUILD].forEach(i => {
     ['bcur','bnew','bdays','bhour','bmin','bquick','bmemo'].forEach(f => {
       const el = document.getElementById(`${f}-${i}`); if(el) el.value='';
     });
     const chk = document.getElementById(`bcheck-${i}`); if(chk) chk.checked=false;
     setUnitBtn(`bcur-u-${i}`,'K'); setUnitBtn(`bnew-u-${i}`,'K');
+    // 表示のみ更新（保存なし）
+    const diffEl = document.getElementById(`bdiff-${i}`);
+    if(diffEl) { diffEl.textContent='—'; diffEl.className='field-result empty'; }
+    const caEl = document.getElementById(`bcaval-${i}`);
+    if(caEl) { caEl.textContent='—'; caEl.className='ca-convert-val empty'; }
+    const capts = document.getElementById(`bca-${i}`);
+    if(capts) { capts.textContent='— pt'; capts.className='slot-ca-pts empty'; }
     updateMemoPreview(i);
-    onBuildInput(i);
   });
   for (let i=0; i<EVO_COUNT; i++) {
     ['ecur','enew','edays','ehour','emin','equick','ememo'].forEach(f => {
       const el = document.getElementById(`${f}-${i}`); if(el) el.value='';
     });
     setUnitBtn(`ecur-u-${i}`,'K'); setUnitBtn(`enew-u-${i}`,'K');
+    const diffEl = document.getElementById(`ediff-${i}`);
+    if(diffEl) { diffEl.textContent='—'; diffEl.className='field-result empty'; }
     updateEvoMemoPreview(i);
-    onEvoInput(i);
   }
   const ptsEl = document.getElementById('current-pts');
   if (ptsEl) ptsEl.value = '';

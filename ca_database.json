@@ -9,7 +9,7 @@
       "https://lilygamelife.com/the-ants-event-calendar/",
       "https://manimany.net/157"
     ],
-    "version": "260320"
+    "version": "260308"
   },
   "reward_thresholds": {
     "note": "女王Lv25のリワード必要ポイント。時間帯によって異なる。",
@@ -22,14 +22,14 @@
       },
       "building_speed": {
         "label": "建設加速あり（高難度）",
-        "reward1": 300000,
-        "reward2": 2300000,
+        "reward1": 200000,
+        "reward2": 1200000,
         "reward3": 16300000
       },
       "evolution_speed": {
         "label": "進化加速あり（高難度）",
-        "reward1": 300000,
-        "reward2": 2300000,
+        "reward1": 100000,
+        "reward2": 1100000,
         "reward3": 15300000
       },
       "special_ant": {
@@ -40,8 +40,8 @@
       },
       "low": {
         "label": "低難度",
-        "reward1": 80000,
-        "reward2": 640000,
+        "reward1": 50000,
+        "reward2": 400000,
         "reward3": 4240000
       }
     }
@@ -1599,44 +1599,8 @@
           "premium_transfer": true,
           "tasks": [
             {
-              "label": "兵隊アリを孵化する時に使った加速アイテム時間が1分毎に",
+              "label": "使った加速アイテム時間が1分毎に",
               "points": 400
-            },
-            {
-              "label": "進化する時に使った加速アイテム時間が1分毎に",
-              "points": 400
-            },
-            {
-              "label": "建設LvUP時に使った加速アイテム時間が1分毎に",
-              "points": 400
-            },
-            {
-              "label": "一つ生命エッセンスを消耗",
-              "points": 25000
-            },
-            {
-              "label": "一つ遺伝物質Ⅳを消耗",
-              "points": 10000
-            },
-            {
-              "label": "一つ遺伝物質Ⅲを消耗",
-              "points": 4000
-            },
-            {
-              "label": "一つ遺伝物質Ⅱを消耗",
-              "points": 1000
-            },
-            {
-              "label": "一つ遺伝物質Ⅰを消耗",
-              "points": 200
-            },
-            {
-              "label": "１つ高等DNAを消耗します",
-              "points": 10000
-            },
-            {
-              "label": "１つDNAを消耗します",
-              "points": 2000
             }
           ]
         },

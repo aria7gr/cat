@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.6.6  2026.03.30  iOSホーム画面アイコン対応・タブラベルを「完成時刻指定」に変更
+  v0.7    2026.03.30  補強戦闘力+1対応（DB更新）・スロット別建築/補強トグル（1000pt/600pt切替）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -411,6 +411,35 @@ body {
 }
 .bp-unit-btn.active-k { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
 .bp-unit-btn.active-m { background: var(--surface2); color: var(--r3-color); border-color: var(--r3-color); }
+
+/* 建築/補強トグル */
+.bp-mode-toggle {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+.bp-mode-btn {
+  flex: 1;
+  padding: 3px 0;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.bp-mode-btn.active-build {
+  background: var(--surface2);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.bp-mode-btn.active-reinforce {
+  background: var(--surface2);
+  color: var(--green);
+  border-color: var(--green);
+}
 
 /* BP一行入力 */
 .bp-single-wrap { flex: 1; display: flex; gap: 3px; min-width: 0; }
@@ -817,7 +846,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 30 '26 🐈‍⬛ v0.6.6</div>
+<div class="version-label">Mar 30 '26 🐈‍⬛ v0.7</div>
 
 <script>
 // ============================================================
@@ -1085,10 +1114,37 @@ function updateHatchSection() {
 // ============================================================
 // 建築BP関連
 // ============================================================
-function getBpTaskPts() {
+function getBpTaskPts(slotIdx) {
   if (!currentSlot) return 0;
-  const t = currentSlot.tasks.find(t => t.label === '建築戦闘力+1');
-  return t ? t.points : 0;
+  const hasBuilding = currentSlot.tasks.some(t => t.label === '建築戦闘力+1');
+  if (!hasBuilding) return 0;
+  // スロット別トグルで建築(1000)/補強(600)を切り替え
+  if (slotIdx !== undefined) {
+    const mode = getSlotBpMode(slotIdx);
+    return mode === 'reinforce' ? 600 : 1000;
+  }
+  return 1000;
+}
+
+function getSlotBpMode(i) {
+  try {
+    const key = `cat_s_p${currentPage}_bpmode_${i}`;
+    return localStorage.getItem(key) || 'build';
+  } catch(e) { return 'build'; }
+}
+
+function setSlotBpMode(i, mode) {
+  try {
+    localStorage.setItem(`cat_s_p${currentPage}_bpmode_${i}`, mode);
+  } catch(e) {}
+  const buildBtn = document.getElementById(`bpmode-build-${i}`);
+  const reinforceBtn = document.getElementById(`bpmode-reinforce-${i}`);
+  if (buildBtn && reinforceBtn) {
+    buildBtn.className = 'bp-mode-btn' + (mode === 'build' ? ' active-build' : '');
+    reinforceBtn.className = 'bp-mode-btn' + (mode === 'reinforce' ? ' active-reinforce' : '');
+  }
+  onBuildInput(i);
+  calcAll();
 }
 function updateBpWarn() {
   const show = getBpTaskPts() === 0;
@@ -1362,6 +1418,10 @@ function buildBuildSlotHTML(i) {
           <span class="slot-ca-pts empty" id="bca-${i}">— pt</span>
         </div>
         <div class="slot-fields">
+          <div class="bp-mode-toggle" id="bpmode-row-${i}">
+            <button class="bp-mode-btn active-build" id="bpmode-build-${i}" onclick="setSlotBpMode(${i},'build')">建築 1000pt</button>
+            <button class="bp-mode-btn" id="bpmode-reinforce-${i}" onclick="setSlotBpMode(${i},'reinforce')">補強 600pt</button>
+          </div>
           <div class="field-row">
             <span class="field-label">BP</span>
             <div class="bp-single-wrap">
@@ -1543,7 +1603,7 @@ function onBuildInput(i) {
   if (cur>0 && nw>cur) {
     const diff = Math.round(nw-cur);
     diffEl.textContent = '+'+fmtNum(diff); diffEl.classList.remove('empty');
-    const ptPerBp = getBpTaskPts();
+    const ptPerBp = getBpTaskPts(i);
     if (ptPerBp>0) {
       const ca = diff*ptPerBp;
       caEl.textContent=fmtNum(ca)+' pt'; caEl.classList.remove('empty');
@@ -1611,7 +1671,7 @@ function calcAll() {
     if (!document.getElementById(`bcheck-${i}`)?.checked) return;
     const cur=getBpVal(`bcur-${i}`,`bcur-u-${i}`);
     const nw=getBpVal(`bnew-${i}`,`bnew-u-${i}`);
-    const ptPerBp=getBpTaskPts();
+    const ptPerBp=getBpTaskPts(i);
     if (cur>0 && nw>cur && ptPerBp>0) { total+=Math.round(nw-cur)*ptPerBp; cnt++; }
   });
   document.getElementById('total-num').textContent = fmtNum(total);
@@ -1991,6 +2051,14 @@ function loadAllSlots() {
     [...LEFT_BUILD,...MID_BUILD].forEach(i => {
       const d = (data.build||[])[i];
       if (d) { applyBuildSlotData(i, d); updateMemoPreview(i); }
+      // bpmode復元
+      const mode = getSlotBpMode(i);
+      const buildBtn = document.getElementById(`bpmode-build-${i}`);
+      const reinforceBtn = document.getElementById(`bpmode-reinforce-${i}`);
+      if (buildBtn && reinforceBtn) {
+        buildBtn.className = 'bp-mode-btn' + (mode === 'build' ? ' active-build' : '');
+        reinforceBtn.className = 'bp-mode-btn' + (mode === 'reinforce' ? ' active-reinforce' : '');
+      }
     });
     for (let i=0; i<EVO_COUNT; i++) {
       const d = (data.evo||[])[i];

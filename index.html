@@ -16,6 +16,7 @@
   v2.2    2026.03.13  検索結果マッチタスクの折りたたみ表示(簡潔/詳細)・設定に表示モード追加・PC版グリッド幅1fr 1fr・検索文字サイズ拡大
   v2.2.1  2026.03.13  検索タブに↺リセット機能追加(検索中のみ表示切替)
   v2.2.2  2026.03.15  検索キーワードを完全一致のみに変更(加速系の誤ヒット修正)
+  v2.2.3  2026.03.30  apple-touch-icon対応
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -24,6 +25,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CAT [view]</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈</text></svg>">
+<link rel="apple-touch-icon" id="apple-touch-icon" href="">
 <link id="google-font" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=BIZ+UDGothic:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 
@@ -932,7 +934,7 @@ body {
 </div>
 
 <!-- バージョン表記 -->
-<div class="version-label">Mar 15 '26 🐈 v2.2.2</div>
+<div class="version-label">Mar 30 '26 🐈 v2.2.3</div>
 
 <!-- モバイルタブ(スマホのみ表示) -->
 <div class="mobile-tabs" id="mobile-tabs">
@@ -1648,6 +1650,22 @@ async function init() {
   // 時計開始
   updateClock();
   setInterval(updateClock, 1000);
+
+  // apple-touch-icon生成（🐈をCanvasでPNG化）
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 180;
+    canvas.height = 180;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.font = '130px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🐈', 90, 95);
+    const link = document.getElementById('apple-touch-icon');
+    if (link) link.href = canvas.toDataURL('image/png');
+  } catch(e) {}
 }
 
 init();

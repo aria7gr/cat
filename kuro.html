@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.7.4  2026.04.06  getBpVal単位なしバグ修正（空文字フォールバック）・自動判定（1000未満→K換算）・BP入力inputmode=tel
+  v0.7.5  2026.04.06  BP入力を2行に戻す・inputmode=decimal・getBpVal修正（単位なし実数判定）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -847,7 +847,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Apr 06 '26 🐈‍⬛ v0.7.4</div>
+<div class="version-label">Apr 06 '26 🐈‍⬛ v0.7.5</div>
 
 <script>
 // ============================================================
@@ -1135,21 +1135,19 @@ function getSlotBpMode(i) {
 }
 
 function setSlotBpMode(i, mode) {
-  try {
-    localStorage.setItem(`cat_s_p${currentPage}_bpmode_${i}`, mode);
-  } catch(e) {}
+  try { localStorage.setItem(`cat_s_p${currentPage}_bpmode_${i}`, mode); } catch(e) {}
   const buildBtn = document.getElementById(`bpmode-build-${i}`);
   const reinforceBtn = document.getElementById(`bpmode-reinforce-${i}`);
   if (buildBtn && reinforceBtn) {
     buildBtn.className = 'bp-mode-btn' + (mode === 'build' ? ' active-build' : '');
     reinforceBtn.className = 'bp-mode-btn' + (mode === 'reinforce' ? ' active-reinforce' : '');
   }
-  // 建築→K、補強→単位なし（実数）をデフォルト設定
+  // 建築→K、補強→単位なし（－）をデフォルト設定
   const defaultUnit = mode === 'reinforce' ? '' : 'K';
-  const bpBtn = document.getElementById(`bbp-u-${i}`);
-  if (bpBtn) applyBpUnitBtn(bpBtn, defaultUnit);
-  document.getElementById(`bcur-u-${i}`).value = defaultUnit;
-  document.getElementById(`bnew-u-${i}`).value = defaultUnit;
+  ['bcur-u', 'bnew-u'].forEach(prefix => {
+    const btn = document.getElementById(`${prefix}-${i}`);
+    if (btn) applyBpUnitBtn(btn, defaultUnit);
+  });
   onBuildInput(i);
   calcAll();
 }
@@ -1176,13 +1174,10 @@ function toggleBpUnit(curId, newId) {
 function getBpVal(numId, unitId) {
   const num  = parseFloat(document.getElementById(numId)?.value) || 0;
   const unitEl = document.getElementById(unitId);
-  // value属性優先（hidden input）、なければtextContent
-  const unit = (unitEl?.value !== undefined && unitEl?.value !== null)
-    ? unitEl.value
-    : (unitEl?.textContent || 'K');
+  const unit = unitEl?.textContent?.trim() || unitEl?.value || 'K';
   if (unit === 'M') return num * 1000000;
   if (unit === 'K') return num * 1000;
-  // 単位なし：1000未満→1000倍（K相当）、1000以上→実数そのまま
+  // 単位なし（－）：1000未満→K換算、1000以上→実数
   return num < 1000 ? num * 1000 : num;
 }
 
@@ -1343,15 +1338,14 @@ function nextBpUnit(cur) {
   return 'K';
 }
 
-function toggleBpUnitSingle(btnId, idx) {
+function toggleBpUnitSingle(btnId, idx, prefix) {
   const btn = document.getElementById(btnId);
-  const curLabel = btn.textContent;
+  const curLabel = btn.textContent.trim();
   const curUnit = curLabel === 'K' ? 'K' : curLabel === 'M' ? 'M' : '';
   const next = nextBpUnit(curUnit);
   applyBpUnitBtn(btn, next);
-  document.getElementById(`bcur-u-${idx}`).value = next;
-  document.getElementById(`bnew-u-${idx}`).value = next;
-  onBuildInput(idx);
+  if (prefix === 'b') onBuildInput(idx);
+  else onEvoInput(idx);
 }
 
 function resetBpSingle(idx) {
@@ -1362,66 +1356,30 @@ function resetBpSingle(idx) {
 }
 
 function carryBp(idx) {
-  const newVal = document.getElementById(`bnew-${idx}`)?.value;
-  if (!newVal) return;
-  const unit = document.getElementById(`bnew-u-${idx}`)?.value || 'K';
-  document.getElementById(`bcur-${idx}`).value = newVal;
-  document.getElementById(`bbp-${idx}`).value = newVal + '-';
-  document.getElementById(`bnew-${idx}`).value = '';
-  document.getElementById(`bcur-u-${idx}`).value = unit;
-  document.getElementById(`bnew-u-${idx}`).value = unit;
-  const btn = document.getElementById(`bbp-u-${idx}`);
-  if (btn) applyBpUnitBtn(btn, unit);
+  const newEl  = document.getElementById(`bnew-${idx}`);
+  const newBtn = document.getElementById(`bnew-u-${idx}`);
+  if (!newEl?.value) return;
+  document.getElementById(`bcur-${idx}`).value = newEl.value;
+  const curBtn = document.getElementById(`bcur-u-${idx}`);
+  if (curBtn && newBtn) {
+    curBtn.textContent = newBtn.textContent;
+    curBtn.className = newBtn.className;
+  }
+  newEl.value = '';
   onBuildInput(idx);
 }
 
-// BP一行入力（進化）
-function onEvoBpSingleInput(idx) {
-  const val = document.getElementById(`ebp-${idx}`)?.value || '';
-  const parsed = parseBpSingle(val);
-  const btn = document.getElementById(`ebp-u-${idx}`);
-  const unit = btn ? (btn.textContent === 'K' ? 'K' : btn.textContent === 'M' ? 'M' : '') : 'K';
-  if (parsed) {
-    document.getElementById(`ecur-${idx}`).value = parsed.cur;
-    document.getElementById(`enew-${idx}`).value = parsed.nw;
-    document.getElementById(`ecur-u-${idx}`).value = unit;
-    document.getElementById(`enew-u-${idx}`).value = unit;
-  } else {
-    document.getElementById(`ecur-${idx}`).value = '';
-    document.getElementById(`enew-${idx}`).value = '';
-  }
-  onEvoInput(idx);
-}
-
-function toggleEvoBpUnitSingle(btnId, idx) {
-  const btn = document.getElementById(btnId);
-  const curLabel = btn.textContent;
-  const curUnit = curLabel === 'K' ? 'K' : curLabel === 'M' ? 'M' : '';
-  const next = nextBpUnit(curUnit);
-  applyBpUnitBtn(btn, next);
-  document.getElementById(`ecur-u-${idx}`).value = next;
-  document.getElementById(`enew-u-${idx}`).value = next;
-  onEvoInput(idx);
-}
-
-function resetEvoBpSingle(idx) {
-  document.getElementById(`ebp-${idx}`).value = '';
-  document.getElementById(`ecur-${idx}`).value = '';
-  document.getElementById(`enew-${idx}`).value = '';
-  onEvoInput(idx);
-}
-
 function carryEvoBp(idx) {
-  const newVal = document.getElementById(`enew-${idx}`)?.value;
-  if (!newVal) return;
-  const unit = document.getElementById(`enew-u-${idx}`)?.value || 'K';
-  document.getElementById(`ecur-${idx}`).value = newVal;
-  document.getElementById(`ebp-${idx}`).value = newVal + '-';
-  document.getElementById(`enew-${idx}`).value = '';
-  document.getElementById(`ecur-u-${idx}`).value = unit;
-  document.getElementById(`enew-u-${idx}`).value = unit;
-  const btn = document.getElementById(`ebp-u-${idx}`);
-  if (btn) applyBpUnitBtn(btn, unit);
+  const newEl  = document.getElementById(`enew-${idx}`);
+  const newBtn = document.getElementById(`enew-u-${idx}`);
+  if (!newEl?.value) return;
+  document.getElementById(`ecur-${idx}`).value = newEl.value;
+  const curBtn = document.getElementById(`ecur-u-${idx}`);
+  if (curBtn && newBtn) {
+    curBtn.textContent = newBtn.textContent;
+    curBtn.className = newBtn.className;
+  }
+  newEl.value = '';
   onEvoInput(idx);
 }
 
@@ -1454,13 +1412,21 @@ function buildBuildSlotHTML(i) {
             <button class="bp-mode-btn" id="bpmode-reinforce-${i}" onclick="setSlotBpMode(${i},'reinforce')">補強 600pt</button>
           </div>
           <div class="field-row">
-            <span class="field-label">BP</span>
-            <div class="bp-single-wrap">
-              <input class="bp-single-input" id="bbp-${i}" type="text" placeholder="現在-完成 例)55.5-59.2" oninput="onBpSingleInput(${i})">
-              <button class="bp-unit-btn active-k" id="bbp-u-${i}" onclick="toggleBpUnitSingle('bbp-u-${i}',${i})">K</button>
-              <button class="bp-reset-btn" onclick="resetBpSingle(${i})">✕</button>
-              <button class="bp-carry-btn" title="完成後BPを現在BPに引き継ぐ" onclick="carryBp(${i})">↑</button>
+            <span class="field-label">現在BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="bcur-${i}" type="number" min="0" step="any" placeholder="数値" inputmode="decimal" autocomplete="off" oninput="onBuildInput(${i})">
+              <button class="bp-unit-btn active-k" id="bcur-u-${i}" onclick="toggleBpUnitSingle('bcur-u-${i}',${i},'b')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'cur')">✕</button>
             </div>
+          </div>
+          <div class="field-row">
+            <span class="field-label">完成後BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="bnew-${i}" type="number" min="0" step="any" placeholder="数値" inputmode="decimal" autocomplete="off" oninput="onBuildInput(${i})">
+              <button class="bp-unit-btn active-k" id="bnew-u-${i}" onclick="toggleBpUnitSingle('bnew-u-${i}',${i},'b')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'new')">✕</button>
+            </div>
+            <button class="bp-carry-btn" title="完成後BPを現在BPに引き継ぐ" onclick="carryBp(${i})">↑</button>
           </div>
           <div class="field-row">
             <span class="field-label">+BP</span>
@@ -1470,11 +1436,6 @@ function buildBuildSlotHTML(i) {
             <span class="ca-convert-label">CA換算</span>
             <span class="ca-convert-val empty" id="bcaval-${i}">—</span>
           </div>
-          <!-- 隠しフィールド（計算用） -->
-          <input type="hidden" id="bcur-${i}">
-          <input type="hidden" id="bnew-${i}">
-          <input type="hidden" id="bcur-u-${i}" value="K">
-          <input type="hidden" id="bnew-u-${i}" value="K">
           <input type="hidden" id="bcheck-${i}">
           <span style="display:none;" id="bca-${i}"></span>
           <div class="time-mode-toggle">
@@ -1550,23 +1511,26 @@ function buildEvoSlotHTML(i) {
       <div class="slot-body" id="ebody-${i}" style="max-height:600px;">
         <div class="slot-fields" style="margin-top:8px;">
           <div class="field-row">
-            <span class="field-label">BP</span>
-            <div class="bp-single-wrap">
-              <input class="bp-single-input" id="ebp-${i}" type="text" placeholder="現在-完成 例)55.5-59.2" oninput="onEvoBpSingleInput(${i})">
-              <button class="bp-unit-btn active-k" id="ebp-u-${i}" onclick="toggleEvoBpUnitSingle('ebp-u-${i}',${i})">K</button>
-              <button class="bp-reset-btn" onclick="resetEvoBpSingle(${i})">✕</button>
-              <button class="bp-carry-btn" title="完成後BPを現在BPに引き継ぐ" onclick="carryEvoBp(${i})">↑</button>
+            <span class="field-label">現在BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="ecur-${i}" type="number" min="0" step="any" placeholder="数値" inputmode="decimal" autocomplete="off" oninput="onEvoInput(${i})">
+              <button class="bp-unit-btn active-k" id="ecur-u-${i}" onclick="toggleBpUnitSingle('ecur-u-${i}',${i},'e')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'ecur')">✕</button>
             </div>
+          </div>
+          <div class="field-row">
+            <span class="field-label">完成後BP</span>
+            <div class="bp-input-wrap">
+              <input class="bp-num-input" id="enew-${i}" type="number" min="0" step="any" placeholder="数値" inputmode="decimal" autocomplete="off" oninput="onEvoInput(${i})">
+              <button class="bp-unit-btn active-k" id="enew-u-${i}" onclick="toggleBpUnitSingle('enew-u-${i}',${i},'e')">K</button>
+              <button class="bp-reset-btn" onclick="resetBpField(${i},'enew')">✕</button>
+            </div>
+            <button class="bp-carry-btn" title="完成後BPを現在BPに引き継ぐ" onclick="carryEvoBp(${i})">↑</button>
           </div>
           <div class="field-row">
             <span class="field-label">+BP</span>
             <span class="field-result empty" id="ediff-${i}">—</span>
           </div>
-          <!-- 隠しフィールド（計算用） -->
-          <input type="hidden" id="ecur-${i}">
-          <input type="hidden" id="enew-${i}">
-          <input type="hidden" id="ecur-u-${i}" value="K">
-          <input type="hidden" id="enew-u-${i}" value="K">
           <div class="time-mode-toggle">
             <button class="time-mode-btn active" id="etmode-remain-${i}" onclick="switchTimeMode(${i},'remain','e')">残り時間</button>
             <button class="time-mode-btn" id="etmode-finish-${i}" onclick="switchTimeMode(${i},'finish','e')">完成時刻指定</button>
@@ -1914,28 +1878,28 @@ function resetMemo(memoId, buildIdx, evoIdx) {
 // ============================================================
 function getBuildSlotData(i) {
   return {
-    bpSingle: document.getElementById(`bbp-${i}`)?.value||'',
-    bpUnit:   document.getElementById(`bbp-u-${i}`)?.textContent||'K',
-    curNum:   document.getElementById(`bcur-${i}`)?.value||'',
-    newNum:   document.getElementById(`bnew-${i}`)?.value||'',
-    days:     document.getElementById(`bdays-${i}`)?.value||'',
-    hour:     document.getElementById(`bhour-${i}`)?.value||'',
-    min:      document.getElementById(`bmin-${i}`)?.value||'',
-    quick:    document.getElementById(`bquick-${i}`)?.value||'',
-    memo:     document.getElementById(`bmemo-${i}`)?.value||'',
+    curNum:  document.getElementById(`bcur-${i}`)?.value||'',
+    curUnit: document.getElementById(`bcur-u-${i}`)?.textContent?.trim()||'K',
+    newNum:  document.getElementById(`bnew-${i}`)?.value||'',
+    newUnit: document.getElementById(`bnew-u-${i}`)?.textContent?.trim()||'K',
+    days:    document.getElementById(`bdays-${i}`)?.value||'',
+    hour:    document.getElementById(`bhour-${i}`)?.value||'',
+    min:     document.getElementById(`bmin-${i}`)?.value||'',
+    quick:   document.getElementById(`bquick-${i}`)?.value||'',
+    memo:    document.getElementById(`bmemo-${i}`)?.value||'',
   };
 }
 function getEvoSlotData(i) {
   return {
-    bpSingle: document.getElementById(`ebp-${i}`)?.value||'',
-    bpUnit:   document.getElementById(`ebp-u-${i}`)?.textContent||'K',
-    curNum:   document.getElementById(`ecur-${i}`)?.value||'',
-    newNum:   document.getElementById(`enew-${i}`)?.value||'',
-    days:     document.getElementById(`edays-${i}`)?.value||'',
-    hour:     document.getElementById(`ehour-${i}`)?.value||'',
-    min:      document.getElementById(`emin-${i}`)?.value||'',
-    quick:    document.getElementById(`equick-${i}`)?.value||'',
-    memo:     document.getElementById(`ememo-${i}`)?.value||'',
+    curNum:  document.getElementById(`ecur-${i}`)?.value||'',
+    curUnit: document.getElementById(`ecur-u-${i}`)?.textContent?.trim()||'K',
+    newNum:  document.getElementById(`enew-${i}`)?.value||'',
+    newUnit: document.getElementById(`enew-u-${i}`)?.textContent?.trim()||'K',
+    days:    document.getElementById(`edays-${i}`)?.value||'',
+    hour:    document.getElementById(`ehour-${i}`)?.value||'',
+    min:     document.getElementById(`emin-${i}`)?.value||'',
+    quick:   document.getElementById(`equick-${i}`)?.value||'',
+    memo:    document.getElementById(`ememo-${i}`)?.value||'',
   };
 }
 
@@ -2012,13 +1976,12 @@ function applyPasteText(text, col, btn) {
 }
 
 function applyBuildSlotData(i, d) {
-  if (d.bpSingle !== undefined) {
-    const bpEl = document.getElementById(`bbp-${i}`); if(bpEl) bpEl.value = d.bpSingle;
-    const bpUBtn = document.getElementById(`bbp-u-${i}`);
-    if (bpUBtn && d.bpUnit) { bpUBtn.textContent = d.bpUnit; bpUBtn.className = d.bpUnit==='K'?'bp-unit-btn active-k':'bp-unit-btn active-m'; }
-  }
   document.getElementById(`bcur-${i}`).value  = d.curNum||'';
   document.getElementById(`bnew-${i}`).value  = d.newNum||'';
+  const curBtn = document.getElementById(`bcur-u-${i}`);
+  const newBtn = document.getElementById(`bnew-u-${i}`);
+  if (curBtn && d.curUnit !== undefined) applyBpUnitBtn(curBtn, d.curUnit === '－' ? '' : d.curUnit);
+  if (newBtn && d.newUnit !== undefined) applyBpUnitBtn(newBtn, d.newUnit === '－' ? '' : d.newUnit);
   document.getElementById(`bdays-${i}`).value = d.days||'';
   document.getElementById(`bhour-${i}`).value = d.hour||'';
   document.getElementById(`bmin-${i}`).value  = d.min||'';
@@ -2029,13 +1992,12 @@ function applyBuildSlotData(i, d) {
   onBuildInput(i);
 }
 function applyEvoSlotData(i, d) {
-  if (d.bpSingle !== undefined) {
-    const bpEl = document.getElementById(`ebp-${i}`); if(bpEl) bpEl.value = d.bpSingle;
-    const bpUBtn = document.getElementById(`ebp-u-${i}`);
-    if (bpUBtn && d.bpUnit) { bpUBtn.textContent = d.bpUnit; bpUBtn.className = d.bpUnit==='K'?'bp-unit-btn active-k':'bp-unit-btn active-m'; }
-  }
   document.getElementById(`ecur-${i}`).value  = d.curNum||'';
   document.getElementById(`enew-${i}`).value  = d.newNum||'';
+  const curBtn = document.getElementById(`ecur-u-${i}`);
+  const newBtn = document.getElementById(`enew-u-${i}`);
+  if (curBtn && d.curUnit !== undefined) applyBpUnitBtn(curBtn, d.curUnit === '－' ? '' : d.curUnit);
+  if (newBtn && d.newUnit !== undefined) applyBpUnitBtn(newBtn, d.newUnit === '－' ? '' : d.newUnit);
   document.getElementById(`edays-${i}`).value = d.days||'';
   document.getElementById(`ehour-${i}`).value = d.hour||'';
   document.getElementById(`emin-${i}`).value  = d.min||'';
@@ -2113,7 +2075,7 @@ function switchPage(page) {
 function clearAllInputs() {
   // UIのみリセット。saveAllSlotsを呼ばない
   [...LEFT_BUILD,...MID_BUILD].forEach(i => {
-    ['bcur','bnew','bdays','bhour','bmin','bquick','bmemo','bbp'].forEach(f => {
+    ['bcur','bnew','bdays','bhour','bmin','bquick','bmemo'].forEach(f => {
       const el = document.getElementById(`${f}-${i}`); if(el) el.value='';
     });
     const chk = document.getElementById(`bcheck-${i}`); if(chk) chk.checked=false;
@@ -2128,7 +2090,7 @@ function clearAllInputs() {
     updateMemoPreview(i);
   });
   for (let i=0; i<EVO_COUNT; i++) {
-    ['ecur','enew','edays','ehour','emin','equick','ememo','ebp'].forEach(f => {
+    ['ecur','enew','edays','ehour','emin','equick','ememo'].forEach(f => {
       const el = document.getElementById(`${f}-${i}`); if(el) el.value='';
     });
     setUnitBtn(`ecur-u-${i}`,'K'); setUnitBtn(`enew-u-${i}`,'K');

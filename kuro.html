@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.7.2  2026.04.06  inputmode最適化（decimal/numeric）・autocomplete=off一括適用
+  v0.7.3  2026.04.06  BP入力欄のinputmodeをtextに修正（ハイフン入力対応）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -847,7 +847,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Apr 06 '26 🐈‍⬛ v0.7.2</div>
+<div class="version-label">Apr 06 '26 🐈‍⬛ v0.7.3</div>
 
 <script>
 // ============================================================
@@ -2185,9 +2185,9 @@ function init() {
 }
 
 function applyInputModes() {
-  // BP一行入力（小数点・ハイフンあり）→ decimal
+  // BP一行入力（小数点・ハイフンあり）→ text（ハイフンが必要なためdecimal不可）
   document.querySelectorAll('.bp-single-input').forEach(el => {
-    el.setAttribute('inputmode', 'decimal');
+    el.setAttribute('inputmode', 'text');
     el.setAttribute('autocomplete', 'off');
   });
   // 現在ポイント入力（小数あり）→ decimal

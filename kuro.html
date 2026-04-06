@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.7    2026.03.30  補強戦闘力+1対応（DB更新）・スロット別建築/補強トグル（1000pt/600pt切替）
+  v0.7.2  2026.04.06  inputmode最適化（decimal/numeric）・autocomplete=off一括適用
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -411,6 +411,7 @@ body {
 }
 .bp-unit-btn.active-k { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
 .bp-unit-btn.active-m { background: var(--surface2); color: var(--r3-color); border-color: var(--r3-color); }
+.bp-unit-btn.active-raw { background: var(--surface2); color: var(--green); border-color: var(--green); }
 
 /* 建築/補強トグル */
 .bp-mode-toggle {
@@ -793,7 +794,7 @@ body {
     <div class="calc-card">
       <div class="card-title">☽ 現在ポイント & リワード</div>
       <div class="current-pts-row">
-        <input class="current-pts-input" id="current-pts" type="number" min="0" step="any" placeholder="現在pt" oninput="onCurrentPtsInput()">
+        <input class="current-pts-input" id="current-pts" type="number" min="0" step="any" placeholder="現在pt" oninput="onCurrentPtsInput()" inputmode="decimal" autocomplete="off">
         <button class="pts-unit-btn active-k" id="pts-unit-btn" onclick="togglePtsUnit()">K</button>
         <span class="pts-label">pt</span>
         <button class="clear-btn" onclick="clearCurrentPts()">✕</button>
@@ -846,7 +847,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Mar 30 '26 🐈‍⬛ v0.7</div>
+<div class="version-label">Apr 06 '26 🐈‍⬛ v0.7.2</div>
 
 <script>
 // ============================================================
@@ -1143,6 +1144,12 @@ function setSlotBpMode(i, mode) {
     buildBtn.className = 'bp-mode-btn' + (mode === 'build' ? ' active-build' : '');
     reinforceBtn.className = 'bp-mode-btn' + (mode === 'reinforce' ? ' active-reinforce' : '');
   }
+  // 建築→K、補強→単位なし（実数）をデフォルト設定
+  const defaultUnit = mode === 'reinforce' ? '' : 'K';
+  const bpBtn = document.getElementById(`bbp-u-${i}`);
+  if (bpBtn) applyBpUnitBtn(bpBtn, defaultUnit);
+  document.getElementById(`bcur-u-${i}`).value = defaultUnit;
+  document.getElementById(`bnew-u-${i}`).value = defaultUnit;
   onBuildInput(i);
   calcAll();
 }
@@ -1168,8 +1175,10 @@ function toggleBpUnit(curId, newId) {
 }
 function getBpVal(numId, unitId) {
   const num  = parseFloat(document.getElementById(numId)?.value) || 0;
-  const unit = document.getElementById(unitId)?.textContent || 'K';
-  return unit==='M' ? num*1000000 : num*1000;
+  const unit = document.getElementById(unitId)?.value || document.getElementById(unitId)?.textContent || 'K';
+  if (unit === 'M') return num * 1000000;
+  if (unit === 'K') return num * 1000;
+  return num; // 単位なし：実数そのまま
 }
 
 // ============================================================
@@ -1302,7 +1311,8 @@ function parseBpSingle(val) {
 function onBpSingleInput(idx) {
   const val = document.getElementById(`bbp-${idx}`)?.value || '';
   const parsed = parseBpSingle(val);
-  const unit = document.getElementById(`bbp-u-${idx}`)?.textContent || 'K';
+  const btn = document.getElementById(`bbp-u-${idx}`);
+  const unit = btn ? (btn.textContent === 'K' ? 'K' : btn.textContent === 'M' ? 'M' : '') : 'K';
   if (parsed) {
     document.getElementById(`bcur-${idx}`).value = parsed.cur;
     document.getElementById(`bnew-${idx}`).value = parsed.nw;
@@ -1315,13 +1325,27 @@ function onBpSingleInput(idx) {
   onBuildInput(idx);
 }
 
+function applyBpUnitBtn(btn, unit) {
+  const labels = { 'K': 'K', 'M': 'M', '': '－' };
+  const classes = { 'K': 'active-k', 'M': 'active-m', '': 'active-raw' };
+  btn.textContent = labels[unit] !== undefined ? labels[unit] : unit;
+  btn.className = 'bp-unit-btn ' + (classes[unit] || '');
+}
+
+function nextBpUnit(cur) {
+  if (cur === 'K') return 'M';
+  if (cur === 'M') return '';
+  return 'K';
+}
+
 function toggleBpUnitSingle(btnId, idx) {
   const btn = document.getElementById(btnId);
-  const cur = btn.textContent === 'K' ? 'M' : 'K';
-  btn.textContent = cur;
-  btn.className = cur === 'K' ? 'bp-unit-btn active-k' : 'bp-unit-btn active-m';
-  document.getElementById(`bcur-u-${idx}`).value = cur;
-  document.getElementById(`bnew-u-${idx}`).value = cur;
+  const curLabel = btn.textContent;
+  const curUnit = curLabel === 'K' ? 'K' : curLabel === 'M' ? 'M' : '';
+  const next = nextBpUnit(curUnit);
+  applyBpUnitBtn(btn, next);
+  document.getElementById(`bcur-u-${idx}`).value = next;
+  document.getElementById(`bnew-u-${idx}`).value = next;
   onBuildInput(idx);
 }
 
@@ -1342,7 +1366,7 @@ function carryBp(idx) {
   document.getElementById(`bcur-u-${idx}`).value = unit;
   document.getElementById(`bnew-u-${idx}`).value = unit;
   const btn = document.getElementById(`bbp-u-${idx}`);
-  if (btn) { btn.textContent = unit; btn.className = unit === 'K' ? 'bp-unit-btn active-k' : 'bp-unit-btn active-m'; }
+  if (btn) applyBpUnitBtn(btn, unit);
   onBuildInput(idx);
 }
 
@@ -1350,7 +1374,8 @@ function carryBp(idx) {
 function onEvoBpSingleInput(idx) {
   const val = document.getElementById(`ebp-${idx}`)?.value || '';
   const parsed = parseBpSingle(val);
-  const unit = document.getElementById(`ebp-u-${idx}`)?.textContent || 'K';
+  const btn = document.getElementById(`ebp-u-${idx}`);
+  const unit = btn ? (btn.textContent === 'K' ? 'K' : btn.textContent === 'M' ? 'M' : '') : 'K';
   if (parsed) {
     document.getElementById(`ecur-${idx}`).value = parsed.cur;
     document.getElementById(`enew-${idx}`).value = parsed.nw;
@@ -1365,11 +1390,12 @@ function onEvoBpSingleInput(idx) {
 
 function toggleEvoBpUnitSingle(btnId, idx) {
   const btn = document.getElementById(btnId);
-  const cur = btn.textContent === 'K' ? 'M' : 'K';
-  btn.textContent = cur;
-  btn.className = cur === 'K' ? 'bp-unit-btn active-k' : 'bp-unit-btn active-m';
-  document.getElementById(`ecur-u-${idx}`).value = cur;
-  document.getElementById(`enew-u-${idx}`).value = cur;
+  const curLabel = btn.textContent;
+  const curUnit = curLabel === 'K' ? 'K' : curLabel === 'M' ? 'M' : '';
+  const next = nextBpUnit(curUnit);
+  applyBpUnitBtn(btn, next);
+  document.getElementById(`ecur-u-${idx}`).value = next;
+  document.getElementById(`enew-u-${idx}`).value = next;
   onEvoInput(idx);
 }
 
@@ -1390,7 +1416,7 @@ function carryEvoBp(idx) {
   document.getElementById(`ecur-u-${idx}`).value = unit;
   document.getElementById(`enew-u-${idx}`).value = unit;
   const btn = document.getElementById(`ebp-u-${idx}`);
-  if (btn) { btn.textContent = unit; btn.className = unit === 'K' ? 'bp-unit-btn active-k' : 'bp-unit-btn active-m'; }
+  if (btn) applyBpUnitBtn(btn, unit);
   onEvoInput(idx);
 }
 
@@ -2153,6 +2179,36 @@ function init() {
   }, 1000);
 
   setInterval(() => updateSlotBar(), 60000);
+
+  // inputmode・autocomplete一括設定
+  applyInputModes();
+}
+
+function applyInputModes() {
+  // BP一行入力（小数点・ハイフンあり）→ decimal
+  document.querySelectorAll('.bp-single-input').forEach(el => {
+    el.setAttribute('inputmode', 'decimal');
+    el.setAttribute('autocomplete', 'off');
+  });
+  // 現在ポイント入力（小数あり）→ decimal
+  document.querySelectorAll('.current-pts-input, .pts-input, .manual-pts').forEach(el => {
+    el.setAttribute('inputmode', 'decimal');
+    el.setAttribute('autocomplete', 'off');
+  });
+  // 日時分・月日時・+/-欄（正整数）→ numeric
+  document.querySelectorAll('.inc-dec-num, .finish-num-input').forEach(el => {
+    el.setAttribute('inputmode', 'numeric');
+    el.setAttribute('autocomplete', 'off');
+  });
+  // クイック入力（数字のみ）→ numeric
+  document.querySelectorAll('.quick-input').forEach(el => {
+    el.setAttribute('inputmode', 'numeric');
+    el.setAttribute('autocomplete', 'off');
+  });
+  // メモ（自由記述）→ デフォルトのまま、autocompleteのみoff
+  document.querySelectorAll('.slot-memo').forEach(el => {
+    el.setAttribute('autocomplete', 'off');
+  });
 }
 
 init();

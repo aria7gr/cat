@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.7.5  2026.04.06  BP入力を2行に戻す・inputmode=decimal・getBpVal修正（単位なし実数判定）
+  v0.7.6  2026.04.06  loadAllSlotsで単位ボタンもbpmode連動復元（補強600pt計算バグ根本修正）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -847,7 +847,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Apr 06 '26 🐈‍⬛ v0.7.5</div>
+<div class="version-label">Apr 06 '26 🐈‍⬛ v0.7.6</div>
 
 <script>
 // ============================================================
@@ -2044,7 +2044,7 @@ function loadAllSlots() {
     [...LEFT_BUILD,...MID_BUILD].forEach(i => {
       const d = (data.build||[])[i];
       if (d) { applyBuildSlotData(i, d); updateMemoPreview(i); }
-      // bpmode復元
+      // bpmode復元（トグルボタンと単位ボタン両方）
       const mode = getSlotBpMode(i);
       const buildBtn = document.getElementById(`bpmode-build-${i}`);
       const reinforceBtn = document.getElementById(`bpmode-reinforce-${i}`);
@@ -2052,6 +2052,11 @@ function loadAllSlots() {
         buildBtn.className = 'bp-mode-btn' + (mode === 'build' ? ' active-build' : '');
         reinforceBtn.className = 'bp-mode-btn' + (mode === 'reinforce' ? ' active-reinforce' : '');
       }
+      const defaultUnit = mode === 'reinforce' ? '' : 'K';
+      ['bcur-u', 'bnew-u'].forEach(prefix => {
+        const btn = document.getElementById(`${prefix}-${i}`);
+        if (btn) applyBpUnitBtn(btn, defaultUnit);
+      });
     });
     for (let i=0; i<EVO_COUNT; i++) {
       const d = (data.evo||[])[i];

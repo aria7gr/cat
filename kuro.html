@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.8    2026.04.19  タイトルをKUROに変更・計算タブに任意スロット選択UI追加（現在に戻すボタン付き）
+  v0.8.1  2026.04.27  計算タブ：スロット選択時リワード・スロットバー連動・見込みCA換算表示
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -879,7 +879,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">Apr 19 '26 🐈‍⬛ v0.8</div>
+<div class="version-label">Apr 27 '26 🐈‍⬛ v0.8.1</div>
 
 <script>
 // ============================================================
@@ -1083,8 +1083,10 @@ function updateSlotBar() {
 // リワード閾値
 // ============================================================
 function updateRewardThresholds() {
-  if (!db || !currentSlot) return;
-  const th = db.reward_thresholds.types[currentSlot.reward_type || 'standard'];
+  if (!db) return;
+  const slot = getCalcSlot();
+  if (!slot) return;
+  const th = db.reward_thresholds.types[slot.reward_type || 'standard'];
   if (!th) return;
   document.getElementById('thresh-r1').textContent = fmtNum(th.reward1);
   document.getElementById('thresh-r2').textContent = fmtNum(th.reward2);
@@ -1224,6 +1226,9 @@ function onCalcSlotChange() {
   isCalcManual = true;
   const btn = document.getElementById('calc-now-btn');
   if (btn) btn.classList.add('is-manual');
+  // スロットバーを選択時間帯に切り替え（計算タブのみ）
+  updateCalcSlotBar(calcCurrentSlot);
+  updateRewardThresholds();
   updateAccelSection();
   updateHatchSection();
   calcAll();
@@ -1234,11 +1239,29 @@ function resetCalcSlot() {
   isCalcManual = false;
   const btn = document.getElementById('calc-now-btn');
   if (btn) btn.classList.remove('is-manual');
-  // ドロップダウンを現在時刻に戻す
+  // スロットバーを現在時刻に戻す
+  updateCalcSlotBar(currentSlot);
   selectCurrentCalcSlot();
+  updateRewardThresholds();
   updateAccelSection();
   updateHatchSection();
   calcAll();
+}
+
+function updateCalcSlotBar(slot) {
+  if (!slot) return;
+  const h = parseInt(slot.times[0].split(':')[0]);
+  document.getElementById('slot-event').textContent    = slot.event;
+  document.getElementById('slot-time-bar').textContent = slot.times[0]+'〜'+String((h+1)%24).padStart(2,'0')+':00';
+  const tasksEl = document.getElementById('slot-tasks');
+  tasksEl.innerHTML = '';
+  slot.tasks.slice(0,4).forEach(t => {
+    const c = document.createElement('div');
+    c.className = 'slot-task-chip';
+    c.innerHTML = `<span>${t.label}</span><span class="chip-pts">${fmtNum(t.points)}pt</span>`;
+    tasksEl.appendChild(c);
+  });
+  renderSlotTasksDetail(slot);
 }
 
 function selectCurrentCalcSlot() {
@@ -1741,8 +1764,13 @@ function onBuildInput(i) {
       caEl.textContent=fmtNum(ca)+' pt'; caEl.classList.remove('empty');
       caValEl.textContent=fmtNum(ca)+' pt'; caValEl.className='ca-convert-val';
     } else {
+      // 建築戦闘力+1がないスロット：見込み値をトグル設定で計算
+      const mode = getSlotBpMode(i);
+      const estPts = mode === 'reinforce' ? 600 : 1000;
+      const estCa = diff * estPts;
       caEl.textContent='— pt'; caEl.classList.add('empty');
-      caValEl.textContent='このスロットでは加算されません'; caValEl.className='ca-convert-val empty';
+      caValEl.textContent=`このスロットでは加算されません（見込み：${fmtNum(estCa)} pt）`;
+      caValEl.className='ca-convert-val empty';
     }
   } else {
     diffEl.textContent='—'; diffEl.classList.add('empty');

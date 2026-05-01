@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.8.1  2026.04.27  計算タブ：スロット選択時リワード・スロットバー連動・見込みCA換算表示
+  v0.8.2  2026.05.01  折りたたみ時CA換算pt表示・計算タブにスロット別CA一覧追加（8スロット合計）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -387,7 +387,11 @@ body {
 }
 .slot-cd-finish {
   font-family: var(--font-mono); font-size: var(--sz-sm);
-  color: var(--mint); display: block; margin-bottom: 5px;
+  color: var(--mint); display: block; margin-bottom: 3px;
+}
+.slot-cd-ca {
+  font-family: var(--font-mono); font-size: var(--sz-sm);
+  color: var(--green); display: block; margin-bottom: 5px;
 }
 
 /* メモプレビュー */
@@ -876,10 +880,22 @@ body {
       <div class="total-note" id="total-note">スロットにチェックを入れると加算されます</div>
     </div>
 
+    <!-- スロット別CA一覧 -->
+    <div class="panel" style="margin-top:10px;">
+      <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>☽ スロット別 CA換算一覧</span>
+      </div>
+      <div id="ca-slot-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+      <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:var(--sz-sm);color:var(--text-dim);">合計（見込み含む）</span>
+        <span style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--green);" id="ca-slot-total">—</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<div class="version-label">Apr 27 '26 🐈‍⬛ v0.8.1</div>
+<div class="version-label">May 01 '26 🐈‍⬛ v0.8.2</div>
 
 <script>
 // ============================================================
@@ -1287,6 +1303,45 @@ function selectCurrentCalcSlot() {
   slotSel.value = 0;
 }
 
+function updateCaSlotList() {
+  const listEl = document.getElementById('ca-slot-list');
+  const totalEl = document.getElementById('ca-slot-total');
+  if (!listEl || !totalEl) return;
+  listEl.innerHTML = '';
+  let grandTotal = 0;
+  let hasAny = false;
+
+  const allSlots = [
+    ...[...LEFT_BUILD, ...MID_BUILD].map(i => ({ prefix:'b', idx:i, label:`建築${i+1}` })),
+    ...Array.from({length:EVO_COUNT}, (_,i) => ({ prefix:'e', idx:i, label:'進化1' }))
+  ];
+
+  allSlots.forEach(({prefix, idx, label}) => {
+    const cur = getBpVal(`${prefix}cur-${idx}`, `${prefix}cur-u-${idx}`);
+    const nw  = getBpVal(`${prefix}new-${idx}`, `${prefix}new-u-${idx}`);
+    if (!(cur>0 && nw>cur)) return;
+    const diff = Math.round(nw-cur);
+    const ptPerBp = prefix === 'b' ? getBpTaskPts(idx) : 0;
+    const mode = prefix === 'b' ? getSlotBpMode(idx) : 'build';
+    const estPts = mode === 'reinforce' ? 600 : 1000;
+    const ca = ptPerBp > 0 ? diff * ptPerBp : diff * estPts;
+    const isEst = ptPerBp === 0;
+    grandTotal += ca;
+    hasAny = true;
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:var(--sz-sm);';
+    row.innerHTML = `
+      <span style="color:var(--text-dim);">${label}</span>
+      <span style="font-family:var(--font-mono);color:${isEst ? 'var(--text-dim)' : 'var(--green)'};">
+        ${isEst ? '≒' : ''}${fmtNum(ca)} pt
+      </span>`;
+    listEl.appendChild(row);
+  });
+
+  totalEl.textContent = hasAny ? fmtNum(grandTotal)+' pt' : '—';
+}
+
 function getSlotBpMode(i) {
   try {
     const key = `cat_s_p${currentPage}_bpmode_${i}`;
@@ -1559,6 +1614,7 @@ function buildBuildSlotHTML(i) {
       <div class="slot-collapsed-info" id="bci-${i}">
         <span class="slot-cd-remaining cd-normal" id="bcd-remaining-${i}"></span>
         <span class="slot-cd-finish" id="bcd-finish-${i}"></span>
+        <span class="slot-cd-ca" id="bcd-ca-${i}"></span>
       </div>
       <div class="slot-memo-preview" id="bmemo-prev-${i}"></div>
       <div class="slot-body" id="bbody-${i}" style="max-height:600px;">
@@ -1666,6 +1722,7 @@ function buildEvoSlotHTML(i) {
       <div class="slot-collapsed-info" id="eci-${i}">
         <span class="slot-cd-remaining cd-normal" id="ecd-remaining-${i}"></span>
         <span class="slot-cd-finish" id="ecd-finish-${i}"></span>
+        <span class="slot-cd-ca" id="ecd-ca-${i}"></span>
       </div>
       <div class="slot-memo-preview" id="ememo-prev-${i}"></div>
       <div class="slot-body" id="ebody-${i}" style="max-height:600px;">
@@ -1759,23 +1816,27 @@ function onBuildInput(i) {
     const diff = Math.round(nw-cur);
     diffEl.textContent = '+'+fmtNum(diff); diffEl.classList.remove('empty');
     const ptPerBp = getBpTaskPts(i);
+    const mode = getSlotBpMode(i);
+    const estPts = mode === 'reinforce' ? 600 : 1000;
+    const caEl2 = document.getElementById(`bcd-ca-${i}`);
     if (ptPerBp>0) {
       const ca = diff*ptPerBp;
       caEl.textContent=fmtNum(ca)+' pt'; caEl.classList.remove('empty');
       caValEl.textContent=fmtNum(ca)+' pt'; caValEl.className='ca-convert-val';
+      if (caEl2) caEl2.textContent = 'CA: '+fmtNum(ca)+' pt';
     } else {
-      // 建築戦闘力+1がないスロット：見込み値をトグル設定で計算
-      const mode = getSlotBpMode(i);
-      const estPts = mode === 'reinforce' ? 600 : 1000;
       const estCa = diff * estPts;
       caEl.textContent='— pt'; caEl.classList.add('empty');
       caValEl.textContent=`このスロットでは加算されません（見込み：${fmtNum(estCa)} pt）`;
       caValEl.className='ca-convert-val empty';
+      if (caEl2) caEl2.textContent = '見込みCA: '+fmtNum(estCa)+' pt';
     }
   } else {
     diffEl.textContent='—'; diffEl.classList.add('empty');
     caEl.textContent='— pt'; caEl.classList.add('empty');
     caValEl.textContent='—'; caValEl.className='ca-convert-val empty';
+    const caEl2 = document.getElementById(`bcd-ca-${i}`);
+    if (caEl2) caEl2.textContent = '';
   }
   if (cardEl) cardEl.classList.toggle('checked', !!checked);
   saveAllSlots(); calcAll();
@@ -1786,8 +1847,16 @@ function onEvoInput(i) {
   const cur = getBpVal(`ecur-${i}`,`ecur-u-${i}`);
   const nw  = getBpVal(`enew-${i}`,`enew-u-${i}`);
   const diffEl = document.getElementById(`ediff-${i}`);
-  if (cur>0 && nw>cur) { diffEl.textContent='+'+fmtNum(Math.round(nw-cur)); diffEl.classList.remove('empty'); }
-  else { diffEl.textContent='—'; diffEl.classList.add('empty'); }
+  const caEl2  = document.getElementById(`ecd-ca-${i}`);
+  if (cur>0 && nw>cur) {
+    const diff = Math.round(nw-cur);
+    diffEl.textContent='+'+fmtNum(diff); diffEl.classList.remove('empty');
+    // 進化スロットはCA換算なし（見込み表示のみ）
+    if (caEl2) caEl2.textContent = '';
+  } else {
+    diffEl.textContent='—'; diffEl.classList.add('empty');
+    if (caEl2) caEl2.textContent = '';
+  }
   saveAllSlots();
 }
 
@@ -1840,6 +1909,7 @@ function calcAll() {
     ? `${cnt}スロット選択中 ／ 現在pt(${fmtNum(pts)}) + 建築(${fmtNum(total)}) = ${fmtNum(pts+total)} pt`
     : 'スロットにチェックを入れると加算されます';
   updateBpWarn();
+  updateCaSlotList();
 }
 
 // ============================================================

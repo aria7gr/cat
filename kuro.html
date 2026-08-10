@@ -9,7 +9,7 @@
   v0.4.1  2026.03.19  折りたたみ時120px固定・スロット名/カウントダウン/メモを15pxに底上げ
   v0.4.2  2026.03.19  ヘッダー🐈‍⬛重複削除・現在pt/孵化逆算にクリアボタン追加・孵化レベル記憶・孵化結果をK小数第1位表示
   v0.4.3  2026.03.20  折りたたみ時の残り時間・完成日時を2行表示・緊急度4段階ゴールドカラー・メモをオフホワイト・完成時刻をミントグリーン・折りたたみ時背景を微暗に
-  v0.8.2  2026.05.01  折りたたみ時CA換算pt表示・計算タブにスロット別CA一覧追加（8スロット合計）
+  v0.8.3  2026.05.15  一括コピー失敗時にテキストエリア表示フォールバック追加（Firefox対応）
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -895,7 +895,7 @@ body {
   </div>
 </div>
 
-<div class="version-label">May 01 '26 🐈‍⬛ v0.8.2</div>
+<div class="version-label">May 15 '26 🐈‍⬛ v0.8.3</div>
 
 <script>
 // ============================================================
@@ -2147,12 +2147,38 @@ function bulkCopy(col) {
     data = { type: 'cat_s_mid', build: MID_BUILD.map(i => getBuildSlotData(i)), evo: [getEvoSlotData(0)] };
   }
   const json = JSON.stringify(data);
+  const btn = event.target;
   navigator.clipboard.writeText(json).then(() => {
-    const btn = event.target;
     const orig = btn.textContent;
     btn.textContent = '✓ コピー完了';
     setTimeout(() => btn.textContent = orig, 1500);
-  }).catch(() => alert('コピーに失敗しました。'));
+  }).catch(() => {
+    showCopyDialog(json);
+  });
+}
+
+function showCopyDialog(json) {
+  const overlay = document.createElement('div');
+  overlay.className = 'paste-overlay';
+  overlay.innerHTML = `
+    <div class="paste-dialog">
+      <div class="paste-dialog-title">クリップボードへの自動コピーに失敗しました。下のテキストを選択してコピーしてください</div>
+      <textarea class="paste-textarea" id="copy-textarea-output" readonly></textarea>
+      <div class="paste-dialog-btns">
+        <button class="paste-cancel-btn" onclick="this.closest('.paste-overlay').remove()">閉じる</button>
+        <button class="paste-ok-btn" onclick="selectCopyTextarea()">全選択</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const ta = overlay.querySelector('#copy-textarea-output');
+  ta.value = json;
+  setTimeout(() => { ta.focus(); ta.select(); }, 100);
+}
+
+function selectCopyTextarea() {
+  const ta = document.getElementById('copy-textarea-output');
+  if (ta) { ta.focus(); ta.select(); }
 }
 
 function bulkPaste(col) {
